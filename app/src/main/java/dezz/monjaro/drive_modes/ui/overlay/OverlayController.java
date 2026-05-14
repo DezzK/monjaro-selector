@@ -19,6 +19,7 @@ package dezz.monjaro.drive_modes.ui.overlay;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dezz.monjaro.drive_modes.R;
+import dezz.monjaro.drive_modes.knob.KnobIntents;
 import dezz.monjaro.drive_modes.util.Logs;
 
 /**
@@ -131,6 +133,10 @@ public class OverlayController {
     /** Time of last scheduleAutoHide() reschedule (elapsedRealtime). */
     private long lastAutoHideScheduleAt;
 
+    /** Tracks the last value emitted via {@link #broadcastVisibility} to dedup
+     *  repeated show() calls — MConfig+ only needs edge transitions. */
+    private boolean lastVisibilityBroadcast;
+
     @Nullable
     private OnModeTapListener tapListener;
 
@@ -191,6 +197,7 @@ public class OverlayController {
         }
 
         appearIfNeeded();
+        broadcastVisibility(true);
         scheduleAutoHide(/* force */ true);
     }
 
@@ -239,6 +246,7 @@ public class OverlayController {
         handler.postDelayed(hideRunnable, delay + autoHideMs);
 
         appearIfNeeded();
+        broadcastVisibility(true);
     }
 
     @MainThread
@@ -256,6 +264,7 @@ public class OverlayController {
                 .withEndAction(() -> {
                     hiding = false;
                     if (root != null) root.setVisibility(View.GONE);
+                    broadcastVisibility(false);
                 })
                 .start();
     }
@@ -271,6 +280,9 @@ public class OverlayController {
             } catch (IllegalArgumentException ignored) {
             }
         }
+        // If the overlay was still visible when teardown started, MConfig+
+        // would otherwise be left thinking it is showing forever.
+        broadcastVisibility(false);
         attached = false;
         root = null;
         overlayCard = null;
@@ -605,6 +617,30 @@ public class OverlayController {
         View v = snapHelper.findSnapView(lm);
         if (v == null) return RecyclerView.NO_POSITION;
         return lm.getPosition(v);
+    }
+
+    /**
+     * Broadcast the current overlay visibility so MConfig+ (v43+) can route
+     * the same physical click as either "show overlay" or "step mode"
+     * depending on whether the overlay is already on screen.
+     *
+     * Deduped on state transitions: repeat show() calls (or a tap on a pill
+     * that calls show() again) do not spam the receiver.
+     */
+    private void broadcastVisibility(boolean isShowing) {
+        if (lastVisibilityBroadcast == isShowing) return;
+        lastVisibilityBroadcast = isShowing;
+        try {
+            Intent intent = new Intent(KnobIntents.ACTION_OVERLAY_VISIBILITY);
+            intent.putExtra(KnobIntents.EXTRA_IS_SHOWING, isShowing);
+            // FLAG_INCLUDE_STOPPED_PACKAGES + FLAG_RECEIVER_INCLUDE_BACKGROUND
+            // (0x01000000) so the broadcast reaches MConfig+ even if it has
+            // been stopped or is in background-restricted state.
+            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES | 0x01000000);
+            context.sendBroadcast(intent);
+        } catch (Throwable t) {
+            Logs.w("Visibility broadcast failed: " + t.getMessage());
+        }
     }
 
     private void scheduleAutoHide() {

@@ -17,7 +17,7 @@
 
     <string name="mconfig_intro">В MConfig+ для нужного слота выберите действие «Отправить намерение» и укажите Intent и Package из списка ниже. Тап по строке копирует значение в буфер обмена.</string>
     <string name="mconfig_section_switch">Переключение режима (Click 1)</string>
-    <string name="mconfig_section_series">Серии быстрых кликов (опционально)</string>
+    <string name="mconfig_section_series">Серии быстрых кликов (только MConfig+ v42 и старее)</string>
     <string name="mconfig_section_show">Показать оверлей без смены режима</string>
     <string name="mconfig_section_package">Package — общее для всех интентов</string>
 
@@ -30,7 +30,7 @@
     <string name="mconfig_label_show_overlay">Кнопка на руле / тап</string>
     <string name="mconfig_label_package">Имя пакета</string>
 
-    <string name="mconfig_footer">Серии 2/3 кликов в MConfig+ диспетчатся одним интентом (а не повторами Click 1) — настраивайте слоты по необходимости или оставьте пустыми, тогда серия проглотится.</string>
+    <string name="mconfig_footer">В MConfig+ v43 и новее достаточно настроить только Click 1 — приложение получает наш статус оверлея и само решает: показать его или переключить режим. Слоты 2× / 3× нужны только для версий по v42 включительно.</string>
 
     <string name="copy_to_clipboard_cd">Скопировать</string>
     <string name="copied_toast">Скопировано</string>

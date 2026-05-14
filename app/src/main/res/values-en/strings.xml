@@ -17,7 +17,7 @@
 
     <string name="mconfig_intro">In MConfig+ pick “Send intent” for the desired slot and use the Intent and Package values from the list below. Tap a row to copy its value to clipboard.</string>
     <string name="mconfig_section_switch">Switch mode (Click 1)</string>
-    <string name="mconfig_section_series">Quick-click series (optional)</string>
+    <string name="mconfig_section_series">Quick-click series (MConfig+ v42 and older only)</string>
     <string name="mconfig_section_show">Show overlay without changing mode</string>
     <string name="mconfig_section_package">Package — shared by all intents</string>
 
@@ -30,7 +30,7 @@
     <string name="mconfig_label_show_overlay">Steering wheel button / tap</string>
     <string name="mconfig_label_package">Package name</string>
 
-    <string name="mconfig_footer">2/3-click series in MConfig+ fire one intent (not repeats of Click 1) — configure the slots as needed, or leave them empty and the series will be swallowed.</string>
+    <string name="mconfig_footer">MConfig+ v43+ only needs Click 1 configured — the app listens to our overlay visibility broadcast and decides per click whether to show the overlay or step the mode. The 2× / 3× slots are required only for v42 and older.</string>
 
     <string name="copy_to_clipboard_cd">Copy</string>
     <string name="copied_toast">Copied</string>

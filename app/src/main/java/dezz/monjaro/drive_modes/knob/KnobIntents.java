@@ -48,5 +48,17 @@ public final class KnobIntents {
     public static final String ACTION_SHOW =
             "dezz.monjaro.drive_modes.SHOW";
 
+    /**
+     * Broadcast we emit while the overlay is visible or hidden so MConfig+
+     * (v43+) can collapse 1/2/3-click series into a single PREV_1/NEXT_1
+     * intent: when the overlay is already showing it forwards as a step,
+     * otherwise as a show. Carries {@link #EXTRA_IS_SHOWING}.
+     */
+    public static final String ACTION_OVERLAY_VISIBILITY =
+            "dezz.monjaro.drive_modes.ISSHOWING";
+
+    /** Boolean extra: true while the overlay is visible, false once it has faded out. */
+    public static final String EXTRA_IS_SHOWING = "is_showing";
+
     private KnobIntents() {}
 }
