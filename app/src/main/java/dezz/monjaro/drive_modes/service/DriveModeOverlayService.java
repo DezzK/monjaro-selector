@@ -1,5 +1,5 @@
 /*
- * Copyright © 2026 DezzK (https://github.com/DezzK)
+ * Copyright © 2026 Dezz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,6 +64,13 @@ public class DriveModeOverlayService extends Service
      */
     private static final int AUTO_HIDE_AFTER_TAP_MS = 500;
 
+    private static DriveModeOverlayService instance;
+
+    /** Returns true while this service is alive (between onCreate and onDestroy). */
+    public static boolean isRunning() {
+        return instance != null;
+    }
+
     private DriveModeRepository repository;
     private DriveModeSettings settings;
     private OverlayController overlay;
@@ -81,6 +88,7 @@ public class DriveModeOverlayService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         Logs.d("DriveModeOverlayService onCreate");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -153,6 +161,7 @@ public class DriveModeOverlayService extends Service
     @Override
     public void onDestroy() {
         Logs.d("DriveModeOverlayService onDestroy");
+        instance = null;
         if (settings != null) {
             settings.getPrefs().unregisterOnSharedPreferenceChangeListener(this);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2026 DezzK (https://github.com/DezzK)
+ * Copyright © 2026 Dezz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +20,53 @@ package dezz.monjaro.drive_modes.boot;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
-import androidx.core.content.ContextCompat;
+import android.os.Build;
+import android.provider.Settings;
+import android.util.Log;
 
 import dezz.monjaro.drive_modes.service.DriveModeOverlayService;
-import dezz.monjaro.drive_modes.util.Logs;
 
+/**
+ * directBootAware receiver that autostarts the overlay service after boot.
+ * Handles BOOT_COMPLETED, LOCKED_BOOT_COMPLETED, QUICKBOOT_POWERON.
+ *
+ * On LOCKED_BOOT_COMPLETED the user data is still encrypted and the
+ * Application class is NOT instantiated yet — so we cannot rely on any
+ * application-scoped state. All required state (preferences) lives in
+ * device-protected storage (see DriveModeSettings).
+ */
 public class BootReceiver extends BroadcastReceiver {
+    private static final String TAG = "MonjaroDriveModes.BootReceiver";
+
+    private static final String ACTION_QUICKBOOT_POWERON = "android.intent.action.QUICKBOOT_POWERON";
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent != null ? intent.getAction() : null;
-        Logs.d("Boot intent: " + action);
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
+                && !Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)
+                && !ACTION_QUICKBOOT_POWERON.equals(action)) {
+            return;
+        }
+        Log.d(TAG, "Device boot completed (" + action + "), checking autostart");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && !Settings.canDrawOverlays(context)) {
+            Log.d(TAG, "No SYSTEM_ALERT_WINDOW permission yet — not starting the service");
+            return;
+        }
+
+        if (DriveModeOverlayService.isRunning()) {
+            Log.d(TAG, "Service is already running — not starting it again");
+            return;
+        }
+
+        Log.i(TAG, "Auto-starting drive mode overlay service");
+        Intent serviceIntent = new Intent(context, DriveModeOverlayService.class);
         try {
-            Intent svc = new Intent(context, DriveModeOverlayService.class);
-            ContextCompat.startForegroundService(context, svc);
+            context.startForegroundService(serviceIntent);
         } catch (Throwable t) {
-            Logs.w("BootReceiver startService failed: " + t.getMessage());
+            Log.w(TAG, "startForegroundService failed: " + t.getMessage());
         }
     }
 }

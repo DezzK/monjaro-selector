@@ -1,5 +1,5 @@
 /*
- * Copyright © 2026 DezzK (https://github.com/DezzK)
+ * Copyright © 2026 Dezz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,8 +41,11 @@ public final class DriveModeSettings {
     private final SharedPreferences prefs;
 
     public DriveModeSettings(@NonNull Context context) {
-        this.prefs = context.getApplicationContext()
-                .getSharedPreferences(PreferenceKeys.PREFS_NAME, Context.MODE_PRIVATE);
+        // Device-protected storage — accessible before user unlock. Important
+        // because LOCKED_BOOT_COMPLETED is delivered before unlock and we need
+        // to read settings (e.g. to decide whether to start the service).
+        Context dps = context.getApplicationContext().createDeviceProtectedStorageContext();
+        this.prefs = dps.getSharedPreferences(PreferenceKeys.PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public SharedPreferences getPrefs() {
