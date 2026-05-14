@@ -4,6 +4,9 @@ build/
 **/build/
 local.properties
 
+# Signing key — never committed
+*.jks
+
 # IDE
 .idea/
 *.iml

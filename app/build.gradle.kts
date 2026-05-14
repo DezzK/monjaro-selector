@@ -1,6 +1,26 @@
+/*
+ * Copyright © 2026 DezzK (https://github.com/DezzK)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 plugins {
     id("com.android.application")
 }
+
+val appVersionName: String by rootProject.extra
+val appVersionCode: Int by rootProject.extra
 
 android {
     namespace = "dezz.monjaro.drive_modes"
@@ -10,11 +30,23 @@ android {
         applicationId = "dezz.monjaro.drive_modes"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
+
+        // APK name: monjaro-drive-modes-vX.Y.Z-{debug,release}.apk
+        setProperty("archivesBaseName", "monjaro-drive-modes-$appVersionName")
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("../keystore.jks")
+            storePassword = System.getenv("KEY_PASSWORD")
+            keyAlias = "key0"
+            keyPassword = System.getenv("KEY_PASSWORD")
         }
     }
 
@@ -25,7 +57,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+        }
+        debug {
+            isDebuggable = true
         }
     }
 
