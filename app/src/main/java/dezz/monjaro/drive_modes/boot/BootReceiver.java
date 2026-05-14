@@ -27,13 +27,12 @@ import android.util.Log;
 import dezz.monjaro.drive_modes.service.DriveModeOverlayService;
 
 /**
- * directBootAware receiver that autostarts the overlay service after boot.
- * Handles BOOT_COMPLETED, LOCKED_BOOT_COMPLETED, QUICKBOOT_POWERON.
+ * Receiver that autostarts the overlay service after boot.
+ * Handles BOOT_COMPLETED and QUICKBOOT_POWERON (Samsung-style early boot).
  *
- * On LOCKED_BOOT_COMPLETED the user data is still encrypted and the
- * Application class is NOT instantiated yet — so we cannot rely on any
- * application-scoped state. All required state (preferences) lives in
- * device-protected storage (see DriveModeSettings).
+ * Not registered for LOCKED_BOOT_COMPLETED because the Service we launch is
+ * not directBootAware and the ECarX SDK is typically only reachable after
+ * user unlock.
  */
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "MonjaroDriveModes.BootReceiver";
@@ -44,7 +43,6 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent != null ? intent.getAction() : null;
         if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
-                && !Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)
                 && !ACTION_QUICKBOOT_POWERON.equals(action)) {
             return;
         }

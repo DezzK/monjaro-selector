@@ -35,6 +35,10 @@
     <string name="copy_to_clipboard_cd">Скопировать</string>
     <string name="copied_toast">Скопировано</string>
 
+    <string name="appearance_title">Внешний вид</string>
+    <string name="appearance_carousel">Карусель: активный по центру</string>
+    <string name="appearance_carousel_caption">Список циклически сдвигается так, чтобы текущий режим всегда находился по центру оверлея.</string>
+
     <string name="duration_title">Длительность отображения</string>
     <string name="duration_preview">Простой показ оверлея</string>
     <string name="duration_switch">При переключении режима</string>

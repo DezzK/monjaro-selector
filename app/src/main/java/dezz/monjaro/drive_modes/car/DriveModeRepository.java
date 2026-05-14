@@ -58,6 +58,8 @@ public final class DriveModeRepository {
     private static final long DEDUP_WINDOW_MS = 250L;
     private static final int MAX_WATCHER_RETRIES = 3;
     private static final long WATCHER_RETRY_BASE_MS = 2000L;
+    private static final int MAX_INIT_RETRIES = 10;
+    private static final long INIT_RETRY_DELAY_MS = 3000L;
 
     private static volatile DriveModeRepository INSTANCE;
 
@@ -80,6 +82,8 @@ public final class DriveModeRepository {
 
     private ICarFunction.IFunctionValueWatcher watcher;
     private int watcherRetries = 0;
+    private int initRetries = 0;
+    private final Object eventLock = new Object();
 
     public interface Listener {
         @MainThread
@@ -124,8 +128,7 @@ public final class DriveModeRepository {
             car = Car.create(appCtx);
             carFunction = car != null ? car.getICarFunction() : null;
             if (carFunction == null) {
-                Logs.w("ICarFunction == null, retrying later");
-                ioHandler.postDelayed(() -> initOnIo(appCtx), 1500);
+                if (!scheduleInitRetry(appCtx, "ICarFunction == null")) return;
                 return;
             }
             loadSupported();
@@ -163,11 +166,27 @@ public final class DriveModeRepository {
             };
             registerWatcherWithRetry();
             initialized = true;
+            initRetries = 0;
             Logs.d("DriveModeRepository init OK");
         } catch (Throwable t) {
             Logs.e("DriveModeRepository init failed", t);
-            ioHandler.postDelayed(() -> initOnIo(appCtx), 3000);
+            scheduleInitRetry(appCtx, t.getMessage());
         }
+    }
+
+    /** Returns true if a retry was scheduled, false if the retry budget is exhausted. */
+    @WorkerThread
+    private boolean scheduleInitRetry(Context appCtx, String reason) {
+        if (initRetries >= MAX_INIT_RETRIES) {
+            Logs.e("DriveModeRepository init giving up after "
+                    + initRetries + " retries (" + reason + ")", null);
+            return false;
+        }
+        initRetries++;
+        long delay = INIT_RETRY_DELAY_MS;
+        Logs.w("Init retry #" + initRetries + " in " + delay + "ms (" + reason + ")");
+        ioHandler.postDelayed(() -> initOnIo(appCtx), delay);
+        return true;
     }
 
     @WorkerThread
@@ -212,13 +231,18 @@ public final class DriveModeRepository {
     @WorkerThread
     private void handleEvent(int newValue) {
         long now = SystemClock.elapsedRealtime();
-        int previous = lastKnownMode;
-        lastKnownMode = newValue;
-
-        if (previous == newValue && (now - lastEventAt) < DEDUP_WINDOW_MS) {
-            return;
+        int previous;
+        // Synchronize the read-then-write of lastKnownMode/lastEventAt so two
+        // concurrent SDK callbacks cannot interleave and dedup against each
+        // other's intermediate state.
+        synchronized (eventLock) {
+            previous = lastKnownMode;
+            if (previous == newValue && (now - lastEventAt) < DEDUP_WINDOW_MS) {
+                return;
+            }
+            lastKnownMode = newValue;
+            lastEventAt = now;
         }
-        lastEventAt = now;
 
         DriveModeChangeOrigin origin = consumeProgrammatic(newValue, now)
                 ? DriveModeChangeOrigin.PROGRAMMATIC
@@ -283,6 +307,7 @@ public final class DriveModeRepository {
             lastKnownMode = v;
             return v;
         } catch (Throwable t) {
+            Logs.w("readCurrentMode failed: " + t.getMessage());
             return lastKnownMode;
         }
     }
@@ -322,16 +347,27 @@ public final class DriveModeRepository {
             Logs.w("setMode: carFunction == null");
             return;
         }
+        boolean wroteInFlight = false;
         if (origin == DriveModeChangeOrigin.PROGRAMMATIC) {
             synchronized (inFlightLock) {
                 programmaticInFlight.put(code, SystemClock.elapsedRealtime() + PROGRAMMATIC_TTL_MS);
             }
+            wroteInFlight = true;
         }
+        boolean ok = false;
         try {
-            boolean ok = cf.setFunctionValue(FUNC, code);
+            ok = cf.setFunctionValue(FUNC, code);
             Logs.d("setFunctionValue(" + code + ") -> " + ok);
         } catch (Throwable t) {
             Logs.w("setFunctionValue failed: " + t.getMessage());
+        }
+        // If the write did not succeed, drop the in-flight entry so a later
+        // external attempt to set the same value is correctly classified as
+        // EXTERNAL rather than swallowed as our own echo.
+        if (wroteInFlight && !ok) {
+            synchronized (inFlightLock) {
+                programmaticInFlight.remove(code);
+            }
         }
     }
 
@@ -358,5 +394,41 @@ public final class DriveModeRepository {
     @AnyThread
     public void removeSupportedModesListener(@NonNull SupportedModesListener listener) {
         supportedListeners.remove(listener);
+    }
+
+    /**
+     * Tear down the SDK binding: unregister the watcher and release the Car
+     * binder. After this call, {@link #init} can be invoked again to rebind.
+     * Listeners are preserved (the service typically removes its own first).
+     *
+     * Safe to call from any thread — actual work happens on the IO thread.
+     */
+    @AnyThread
+    public void shutdown() {
+        ioHandler.post(this::shutdownOnIo);
+    }
+
+    @WorkerThread
+    private void shutdownOnIo() {
+        ICarFunction cf = carFunction;
+        ICarFunction.IFunctionValueWatcher w = watcher;
+        if (cf != null && w != null) {
+            try {
+                cf.unregisterFunctionValueWatcher(w);
+                Logs.d("Watcher unregistered");
+            } catch (Throwable t) {
+                Logs.w("unregisterFunctionValueWatcher failed: " + t.getMessage());
+            }
+        }
+        // ICar in the ECarX adaptapi has no explicit release/disconnect entry;
+        // dropping our reference is the most we can do.
+        watcher = null;
+        carFunction = null;
+        car = null;
+        initialized = false;
+        initRetries = 0;
+        synchronized (inFlightLock) {
+            programmaticInFlight.clear();
+        }
     }
 }

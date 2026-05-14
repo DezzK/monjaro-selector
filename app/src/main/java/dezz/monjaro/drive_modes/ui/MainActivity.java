@@ -62,6 +62,8 @@ import dezz.monjaro.drive_modes.ui.modes.ModeListAdapter;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String STATE_PERMISSION_DIALOG_SHOWN = "permission_dialog_shown";
+
     private ActivityMainBinding binding;
     private ModeListAdapter adapter;
     private ItemTouchHelper itemTouchHelper;
@@ -74,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            permissionDialogShown = savedInstanceState.getBoolean(
+                    STATE_PERMISSION_DIALOG_SHOWN, false);
+        }
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
@@ -85,6 +91,20 @@ public class MainActivity extends AppCompatActivity {
         setupList();
         setupControls();
         setupDurationSliders();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_PERMISSION_DIALOG_SHOWN, permissionDialogShown);
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Drop the binding so the inflated view hierarchy can be GC'd; AppCompat
+        // doesn't do this for us.
+        binding = null;
+        super.onDestroy();
     }
 
     private void setupDurationSliders() {
@@ -199,6 +219,10 @@ public class MainActivity extends AppCompatActivity {
             reloadFromRepository();
             Snackbar.make(binding.getRoot(), R.string.order_reset_toast, Snackbar.LENGTH_SHORT).show();
         });
+
+        binding.switchCarousel.setChecked(settings.isCarouselMode());
+        binding.switchCarousel.setOnCheckedChangeListener(
+                (btn, checked) -> settings.setCarouselMode(checked));
     }
 
     private void reloadFromRepository() {
@@ -292,7 +316,10 @@ public class MainActivity extends AppCompatActivity {
         TextView telegram = root.findViewById(R.id.about_telegram);
         telegram.setOnClickListener(v -> {
             String text = telegram.getText().toString();
-            String handle = text.startsWith("@") ? text.substring(1) : text;
+            String handle = (text.startsWith("@") && text.length() > 1)
+                    ? text.substring(1)
+                    : text;
+            if (handle.isEmpty()) return;
             Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/" + handle));
             try {
                 startActivity(open);

@@ -91,6 +91,14 @@ public final class DriveModeSettings {
         prefs.edit().putBoolean(PreferenceKeys.KEY_DEBUG_LOG_INTENTS, value).apply();
     }
 
+    public boolean isCarouselMode() {
+        return prefs.getBoolean(PreferenceKeys.KEY_CAROUSEL_MODE, false);
+    }
+
+    public void setCarouselMode(boolean value) {
+        prefs.edit().putBoolean(PreferenceKeys.KEY_CAROUSEL_MODE, value).apply();
+    }
+
     @NonNull
     public List<ModeOrderEntry> getOrder() {
         String json = prefs.getString(PreferenceKeys.KEY_MODE_ORDER, null);

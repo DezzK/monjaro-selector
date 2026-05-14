@@ -19,6 +19,8 @@ package dezz.monjaro.drive_modes.util;
 
 import android.util.Log;
 
+import dezz.monjaro.drive_modes.BuildConfig;
+
 public final class Logs {
 
     public static final String TAG = "MonjaroDriveModes";
@@ -26,11 +28,11 @@ public final class Logs {
     private Logs() {}
 
     public static void d(String msg) {
-        Log.d(TAG, msg);
+        if (BuildConfig.DEBUG) Log.d(TAG, msg);
     }
 
     public static void d(String msg, Throwable t) {
-        Log.d(TAG, msg, t);
+        if (BuildConfig.DEBUG) Log.d(TAG, msg, t);
     }
 
     public static void w(String msg) {

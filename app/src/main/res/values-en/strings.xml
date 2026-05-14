@@ -35,6 +35,10 @@
     <string name="copy_to_clipboard_cd">Copy</string>
     <string name="copied_toast">Copied</string>
 
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_carousel">Carousel: active in center</string>
+    <string name="appearance_carousel_caption">The list rotates cyclically so the current mode always sits in the middle of the overlay.</string>
+
     <string name="duration_title">Auto-hide duration</string>
     <string name="duration_preview">Simple overlay show</string>
     <string name="duration_switch">After mode switch</string>

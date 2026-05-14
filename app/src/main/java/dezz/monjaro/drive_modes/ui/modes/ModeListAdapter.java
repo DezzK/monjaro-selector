@@ -24,7 +24,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -76,13 +75,32 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
 
     @NonNull
     @Override
+    @SuppressLint("ClickableViewAccessibility")
     public Vh onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_drive_mode_row, parent, false);
-        return new Vh(v);
+        final Vh holder = new Vh(v);
+        // Listeners bound once per ViewHolder. They look up the current item
+        // via the bound adapter position, so they remain valid after reorder.
+        // Using onClick (not onCheckedChange) sidesteps the spurious-callback
+        // problem when setChecked() is invoked from onBindViewHolder.
+        holder.checkbox.setOnClickListener(v2 -> {
+            int pos = holder.getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            ModeOrderEntry entry = items.get(pos);
+            boolean isChecked = holder.checkbox.isChecked();
+            entry.enabled = isChecked;
+            callback.onEnabledChanged(entry.code, isChecked);
+        });
+        holder.dragHandle.setOnTouchListener((view, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                callback.onStartDrag(holder);
+            }
+            return false;
+        });
+        return holder;
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull Vh h, int position) {
         ModeOrderEntry entry = items.get(position);
@@ -92,20 +110,7 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
         h.icon.setImageResource(desc.iconRes);
         h.icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, desc.accentRes)));
         h.label.setText(desc.labelRes);
-
-        h.checkbox.setOnCheckedChangeListener(null);
         h.checkbox.setChecked(entry.enabled);
-        h.checkbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            entry.enabled = isChecked;
-            callback.onEnabledChanged(entry.code, isChecked);
-        });
-
-        h.dragHandle.setOnTouchListener((v, event) -> {
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-                callback.onStartDrag(h);
-            }
-            return false;
-        });
     }
 
     @Override
@@ -115,7 +120,6 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
 
     static class Vh extends RecyclerView.ViewHolder {
         final MaterialCheckBox checkbox;
-        final FrameLayout iconHolder;
         final ImageView icon;
         final TextView label;
         final ImageView dragHandle;
@@ -124,7 +128,6 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
             super(v);
             checkbox = v.findViewById(R.id.checkbox_enabled);
             icon = v.findViewById(R.id.icon_mode);
-            iconHolder = (FrameLayout) icon.getParent();
             label = v.findViewById(R.id.label_mode);
             dragHandle = v.findViewById(R.id.drag_handle);
         }

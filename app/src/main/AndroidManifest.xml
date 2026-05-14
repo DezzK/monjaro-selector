@@ -7,8 +7,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
 
@@ -60,15 +58,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Not directBootAware: the Service we launch is not directBootAware
+             (the ECarX SDK may not be reachable before user unlock anyway),
+             so we only wake up on BOOT_COMPLETED / QUICKBOOT_POWERON which
+             both fire after credential storage is available. -->
         <receiver
             android:name=".boot.BootReceiver"
             android:enabled="true"
             android:exported="true"
-            android:directBootAware="true"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>

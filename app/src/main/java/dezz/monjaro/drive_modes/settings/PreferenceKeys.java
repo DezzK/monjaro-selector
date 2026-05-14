@@ -26,6 +26,7 @@ public final class PreferenceKeys {
     public static final String KEY_AUTO_HIDE_PREVIEW_MS = "auto_hide_preview_ms";
     public static final String KEY_AUTO_HIDE_SWITCH_MS = "auto_hide_switch_ms";
     public static final String KEY_DEBUG_LOG_INTENTS = "debug_log_intents";
+    public static final String KEY_CAROUSEL_MODE = "carousel_mode";
 
     /** Longer than switch: user explicitly opened the overlay and needs time to look at it and tap. */
     public static final int DEFAULT_AUTO_HIDE_PREVIEW_MS = 5000;

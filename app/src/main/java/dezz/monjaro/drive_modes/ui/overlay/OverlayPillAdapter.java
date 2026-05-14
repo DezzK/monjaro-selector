@@ -17,12 +17,12 @@
 
 package dezz.monjaro.drive_modes.ui.overlay;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -39,14 +39,26 @@ import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
 import dezz.monjaro.drive_modes.car.DriveModeDescriptor;
 
+/**
+ * Highlight is driven by the active CODE: in carousel mode every copy of the
+ * selected mode is highlighted, so when the user scrolls and one copy moves
+ * off-screen the next copy entering the viewport is already lit. The selection
+ * only changes via explicit tap or a programmatic show — never via scrolling.
+ */
 public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.PillVh> {
 
     public interface OnPillClickListener {
         void onPillClick(int modeCode, int position);
     }
 
+    public static final int NO_CODE = Integer.MIN_VALUE;
+
+    private static final float SCALE_ACTIVE = 1.10f;
+    private static final float SCALE_INACTIVE = 0.78f;
+    private static final long SCALE_ANIM_MS = 260L;
+
     private final List<Integer> codes = new ArrayList<>();
-    private int activeCode = -1;
+    private int activeCode = NO_CODE;
     @Nullable
     private OnPillClickListener clickListener;
 
@@ -61,28 +73,28 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
         notifyDataSetChanged();
     }
 
-    public void setActive(int code) {
-        if (activeCode == code) return;
-        int prev = indexOf(activeCode);
-        activeCode = code;
-        int curr = indexOf(code);
-        if (prev >= 0) notifyItemChanged(prev);
-        if (curr >= 0) notifyItemChanged(curr);
-    }
-
-    public int indexOf(int code) {
+    /**
+     * Change the active code. Only the items whose code is the OLD or NEW
+     * value are rebound, so this scales cheaply even with the long carousel
+     * strip.
+     */
+    public void setActiveCode(int newCode) {
+        if (newCode == activeCode) return;
+        int prev = activeCode;
+        activeCode = newCode;
         for (int i = 0; i < codes.size(); i++) {
-            if (codes.get(i) == code) return i;
+            int c = codes.get(i);
+            if (c == prev || c == newCode) notifyItemChanged(i);
         }
-        return -1;
     }
 
     public int getActiveCode() {
         return activeCode;
     }
 
-    public List<Integer> getCodes() {
-        return new ArrayList<>(codes);
+    public int getCodeAt(int position) {
+        if (position < 0 || position >= codes.size()) return NO_CODE;
+        return codes.get(position);
     }
 
     @NonNull
@@ -90,7 +102,16 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
     public PillVh onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.overlay_mode_pill, parent, false);
-        return new PillVh(v);
+        final PillVh holder = new PillVh(v);
+        // Bind the click listener once: it looks up the current code via the
+        // bound adapter position rather than capturing a stale value.
+        v.setOnClickListener(view -> {
+            if (clickListener == null) return;
+            int pos = holder.getBindingAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION || pos >= codes.size()) return;
+            clickListener.onPillClick(codes.get(pos), pos);
+        });
+        return holder;
     }
 
     @Override
@@ -112,20 +133,20 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
             h.icon.setImageTintList(ColorStateList.valueOf(accent));
             h.label.setTextColor(onSurface);
             h.label.setAlpha(1f);
-            animateScale(h.itemView, 1.05f);
+            animateScale(h.itemView, SCALE_ACTIVE);
         } else {
             h.iconHolder.setBackgroundResource(R.drawable.bg_pill_inactive);
             h.icon.setImageTintList(ColorStateList.valueOf(onSurfaceVariant));
             h.label.setTextColor(onSurfaceVariant);
-            h.label.setAlpha(0.6f);
-            animateScale(h.itemView, 0.92f);
+            h.label.setAlpha(0.55f);
+            animateScale(h.itemView, SCALE_INACTIVE);
         }
+    }
 
-        h.itemView.setOnClickListener(v -> {
-            if (clickListener != null) {
-                clickListener.onPillClick(code, position);
-            }
-        });
+    @Override
+    public void onViewRecycled(@NonNull PillVh h) {
+        super.onViewRecycled(h);
+        h.itemView.animate().cancel();
     }
 
     private void animateScale(View v, float to) {
@@ -134,15 +155,13 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
             v.setScaleY(to);
             return;
         }
-        float from = v.getScaleX() == 0f ? 1f : v.getScaleX();
-        ValueAnimator a = ValueAnimator.ofFloat(from, to);
-        a.setDuration(220);
-        a.addUpdateListener(animation -> {
-            float val = (float) animation.getAnimatedValue();
-            v.setScaleX(val);
-            v.setScaleY(val);
-        });
-        a.start();
+        v.animate().cancel();
+        v.animate()
+                .scaleX(to)
+                .scaleY(to)
+                .setDuration(SCALE_ANIM_MS)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
     }
 
     @Override

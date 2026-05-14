@@ -98,8 +98,12 @@ public class KnobReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Sender check. On API 34+ we use {@link #getSentFromPackage()};
-     * older Android versions do not expose such an API, so we skip the check.
+     * Sender check. On API 34+ we use {@link #getSentFromPackage()}; older
+     * Android versions do not expose the sender, so the check is skipped
+     * there (and we rely on the minimal practical attack surface on a head
+     * unit). On API 34+ a missing sender means the broadcaster did not
+     * target us explicitly — reject, since trusted senders (MConfig+ etc.)
+     * always set the package on their intent.
      */
     private boolean isSenderTrusted() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -107,7 +111,8 @@ public class KnobReceiver extends BroadcastReceiver {
         }
         String sender = getSentFromPackage();
         if (sender == null) {
-            return true;
+            Logs.w("Knob intent without sender info — rejected");
+            return false;
         }
         if (TRUSTED_SENDERS.contains(sender)) return true;
         Logs.w("Knob intent from an untrusted package: " + sender + " — ignored");

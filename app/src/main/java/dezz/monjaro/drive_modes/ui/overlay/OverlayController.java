@@ -28,6 +28,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -51,12 +52,18 @@ import dezz.monjaro.drive_modes.util.Logs;
 /**
  * Owns the WindowManager overlay: creation, updates, fade-in/out, auto-hide.
  *
- * Key guarantees:
- *  - autoHide uses a token Runnable, so cancellation is targeted and does not
- *    affect other postDelayed callbacks.
- *  - fade-in/out via ViewPropertyAnimator (more reliable than legacy Animation).
- *  - Repeated show() within the auto-hide window resets the timer.
- *  - Any user activity inside the recycler (touch/scroll) restarts auto-hide.
+ * Key behaviours:
+ *  - Card width is sized to fit pill count, capped at {@link #MAX_WIDTH_FRACTION}
+ *    of the screen.
+ *  - Static mode: scrolling stops at list ends (no empty padding on edges).
+ *  - Carousel mode: the real list is repeated {@link #CAROUSEL_REPEATS} times
+ *    into a virtual strip. The active CODE is highlighted — so every copy of
+ *    the selected mode is lit, and free scrolling never changes the selection.
+ *    Switching the active mode (tap or programmatic show with a new code)
+ *    triggers a SMOOTH scroll to the nearest copy of the new code.
+ *  - Free scrolling does NOT change the selected mode. To change selection
+ *    the user must tap a pill.
+ *  - User activity inside the recycler restarts auto-hide.
  *  - {@link #animateStepsTo} visually walks through intermediate modes for
  *    multi-click series, even though the actual mode is already set to the
  *    final value.
@@ -72,6 +79,19 @@ public class OverlayController {
     private static final long FADE_OUT_MS = 280L;
     private static final long INTERMEDIATE_STEP_MS = 140L;
     private static final float MAX_WIDTH_FRACTION = 0.8f;
+    /** Minimum gap between consecutive scheduleAutoHide() reschedules. Without
+     *  this, a single fling triggers hundreds of removeCallbacks/postDelayed
+     *  pairs per second. */
+    private static final long AUTO_HIDE_RESCHEDULE_MIN_MS = 100L;
+
+    /**
+     * How many times the real list is repeated to form the carousel strip.
+     * Must be odd so a real list copy can sit centered. With 11 copies and
+     * a max real count of 24, the strip is at most ~264 items — well within
+     * RecyclerView's comfort zone, and gives plenty of room before edges are
+     * reached and a silent rebase is needed.
+     */
+    private static final int CAROUSEL_REPEATS = 11;
 
     private final Context context;
     private final WindowManager windowManager;
@@ -84,10 +104,32 @@ public class OverlayController {
     private View root;
     private View overlayCard;
     private RecyclerView recycler;
+    @Nullable
+    private SnapHelper snapHelper;
     /** Auto-hide duration for the CURRENT show. Recomputed on every show call. */
     private int currentAutoHideMs = 3000;
     private boolean attached;
     private boolean hiding;
+    private boolean carouselMode;
+
+    /**
+     * Snapshot of the last real list passed to {@link #show}. Used to decide
+     * whether the existing virtual strip can be reused for a smooth transition
+     * or needs to be rebuilt from scratch.
+     */
+    @Nullable
+    private List<Integer> currentRealCodes;
+
+    @Nullable
+    private ViewTreeObserver.OnGlobalLayoutListener pendingLayoutListener;
+
+    /** Cached card-width inputs in pixels. -1 = not yet computed. */
+    private int cachedPillFootprintPx = -1;
+    private int cachedSidePaddingPx = -1;
+    private int cachedMaxWidthPx = -1;
+
+    /** Time of last scheduleAutoHide() reschedule (elapsedRealtime). */
+    private long lastAutoHideScheduleAt;
 
     @Nullable
     private OnModeTapListener tapListener;
@@ -99,9 +141,35 @@ public class OverlayController {
 
     public void setOnModeTapListener(@Nullable OnModeTapListener listener) {
         this.tapListener = listener;
-        adapter.setOnPillClickListener(listener == null
-                ? null
-                : (modeCode, position) -> listener.onModeTapped(modeCode));
+        adapter.setOnPillClickListener((modeCode, position) -> handlePillClick(modeCode, position));
+    }
+
+    /**
+     * Tap on a pill: that pill becomes the new active one. We immediately
+     * update the active code, smooth-scroll the tapped position into the
+     * center, and notify the service. The subsequent programmatic
+     * {@link #show} that arrives after the SDK round-trip will see the same
+     * active code and skip any further scroll.
+     */
+    private void handlePillClick(int modeCode, int position) {
+        if (position >= 0) {
+            adapter.setActiveCode(modeCode);
+            scrollToCenterIndex(position, /* animate */ true);
+        }
+        if (tapListener != null) tapListener.onModeTapped(modeCode);
+    }
+
+    /**
+     * In carousel mode the list is rendered as a virtual strip (repeated real
+     * list) and every copy of the active code is highlighted; mode changes
+     * smooth-scroll to the nearest copy. In static mode the real list is
+     * rendered once and scrolling stops at the ends.
+     */
+    public void setCarouselMode(boolean enabled) {
+        if (this.carouselMode == enabled) return;
+        this.carouselMode = enabled;
+        // Force a rebuild on the next show so the layout reflects the new mode.
+        currentRealCodes = null;
     }
 
     @MainThread
@@ -115,10 +183,15 @@ public class OverlayController {
 
         currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
-        adapter.setData(new ArrayList<>(orderedCodes), activeCode);
-        scrollToActive(activeCode);
+
+        if (carouselMode) {
+            showCarousel(orderedCodes, activeCode);
+        } else {
+            showStatic(orderedCodes, activeCode);
+        }
+
         appearIfNeeded();
-        scheduleAutoHide();
+        scheduleAutoHide(/* force */ true);
     }
 
     /**
@@ -140,16 +213,23 @@ public class OverlayController {
 
         currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
-        adapter.setData(new ArrayList<>(orderedCodes), startCode);
-        scrollToActive(startCode);
-        appearIfNeeded();
+
+        if (carouselMode) {
+            showCarousel(orderedCodes, startCode);
+        } else {
+            showStatic(orderedCodes, startCode);
+        }
 
         long delay = INTERMEDIATE_STEP_MS;
         for (int i = 0; i < stepsToHighlight.size(); i++) {
             final int code = stepsToHighlight.get(i);
+            final List<Integer> codesRef = orderedCodes;
             Runnable step = () -> {
-                adapter.setActive(code);
-                scrollToActive(code);
+                if (carouselMode) {
+                    showCarousel(codesRef, code);
+                } else {
+                    showStatic(codesRef, code);
+                }
             };
             queuedSteps.add(step);
             handler.postDelayed(step, delay);
@@ -157,6 +237,8 @@ public class OverlayController {
         }
         handler.removeCallbacks(hideRunnable);
         handler.postDelayed(hideRunnable, delay + autoHideMs);
+
+        appearIfNeeded();
     }
 
     @MainThread
@@ -182,6 +264,7 @@ public class OverlayController {
     public void dispose() {
         handler.removeCallbacks(hideRunnable);
         cancelQueuedSteps();
+        removePendingLayoutListener();
         if (root != null && attached) {
             try {
                 windowManager.removeView(root);
@@ -192,7 +275,118 @@ public class OverlayController {
         root = null;
         overlayCard = null;
         recycler = null;
+        snapHelper = null;
+        currentRealCodes = null;
     }
+
+    // ------------------------------------------------------------------
+    // Static (non-carousel) path
+    // ------------------------------------------------------------------
+
+    private void showStatic(@NonNull List<Integer> realCodes, int activeCode) {
+        adjustCardWidth(realCodes.size());
+
+        boolean codesSame = currentRealCodes != null
+                && currentRealCodes.equals(realCodes)
+                && adapter.getItemCount() == realCodes.size();
+
+        int activePos = realCodes.indexOf(activeCode);
+        if (activePos < 0) activePos = 0;
+
+        if (codesSame) {
+            adapter.setActiveCode(activeCode);
+            scrollToCenterIndex(activePos, /* animate */ isCurrentlyVisible());
+        } else {
+            adapter.setData(new ArrayList<>(realCodes), activeCode);
+            currentRealCodes = new ArrayList<>(realCodes);
+            scrollToCenterIndex(activePos, /* animate */ false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Carousel path
+    // ------------------------------------------------------------------
+
+    private void showCarousel(@NonNull List<Integer> realCodes, int requestedCode) {
+        int realCount = realCodes.size();
+        int realIdx = Math.max(0, realCodes.indexOf(requestedCode));
+        adjustCardWidth(realCount);
+
+        boolean stripReady = currentRealCodes != null
+                && currentRealCodes.equals(realCodes)
+                && adapter.getItemCount() == realCount * CAROUSEL_REPEATS;
+
+        if (!stripReady) {
+            rebuildCarousel(realCodes, realIdx);
+            return;
+        }
+
+        if (requestedCode == adapter.getActiveCode()) {
+            // Same selection — do not yank the viewport from wherever the
+            // user has scrolled to.
+            return;
+        }
+
+        // Different code requested. Pick the copy nearest to the current
+        // viewport center, so the smooth scroll travels the minimum distance.
+        int basePos = findSnapPosition();
+        if (basePos < 0) basePos = realCount * (CAROUSEL_REPEATS / 2);
+        int baseRealIdx = ((basePos % realCount) + realCount) % realCount;
+        int diff = wrapDiff(baseRealIdx, realIdx, realCount);
+        int target = basePos + diff;
+
+        if (needsRebase(target, realCount)) {
+            rebuildCarousel(realCodes, realIdx);
+        } else {
+            adapter.setActiveCode(requestedCode);
+            scrollToCenterIndex(target, /* animate */ true);
+        }
+    }
+
+    private void rebuildCarousel(@NonNull List<Integer> realCodes, int realIdx) {
+        int realCount = realCodes.size();
+        int total = realCount * CAROUSEL_REPEATS;
+        List<Integer> display = new ArrayList<>(total);
+        for (int i = 0; i < total; i++) display.add(realCodes.get(i % realCount));
+        int center = realCount * (CAROUSEL_REPEATS / 2) + realIdx;
+        adapter.setData(display, realCodes.get(realIdx));
+        currentRealCodes = new ArrayList<>(realCodes);
+        // No animation on rebuild — the underlying data just changed wholesale.
+        scrollToCenterIndex(center, /* animate */ false);
+    }
+
+    /**
+     * Shortest signed difference from {@code from} to {@code to} on a ring of
+     * size {@code n}. Range: [-n/2, n/2].
+     */
+    static int wrapDiff(int from, int to, int n) {
+        if (n <= 0) return 0;
+        int diff = ((to - from) % n + n) % n;
+        if (diff > n / 2) diff -= n;
+        return diff;
+    }
+
+    /**
+     * True if the candidate position is too close to either end of the virtual
+     * strip and a silent rebase to the center is warranted.
+     */
+    private boolean needsRebase(int virtualPos, int realCount) {
+        if (realCount <= 0) return false;
+        int total = realCount * CAROUSEL_REPEATS;
+        return virtualPos < realCount || virtualPos >= total - realCount;
+    }
+
+    private boolean isCurrentlyVisible() {
+        return root != null
+                && attached
+                && !hiding
+                && root.getVisibility() == View.VISIBLE
+                && root.getAlpha() > 0.01f;
+    }
+
+    // ------------------------------------------------------------------
+    // Window / view setup
+    // ------------------------------------------------------------------
 
     @SuppressLint("ClickableViewAccessibility")
     private void ensureAttached() {
@@ -205,13 +399,15 @@ public class OverlayController {
                 context, LinearLayoutManager.HORIZONTAL, false);
         recycler.setLayoutManager(lm);
         recycler.setAdapter(adapter);
-        SnapHelper snap = new LinearSnapHelper();
-        snap.attachToRecyclerView(recycler);
+        // Disable item animator: we drive scale/alpha ourselves via
+        // ViewPropertyAnimator in the adapter. The default change-animation
+        // wraps the visible pill in a temporary transition during which our
+        // scaleX/scaleY animation doesn't visibly take effect — so the pill
+        // appeared to stay small until it got recycled off-screen.
+        recycler.setItemAnimator(null);
+        snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(recycler);
 
-        // User activity inside the overlay (touch / drag / scroll / fling)
-        // counts as interaction — auto-hide is restarted. Otherwise, if the
-        // user scrolls the list while picking a mode, the overlay would
-        // disappear after 3 seconds.
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
@@ -228,7 +424,7 @@ public class OverlayController {
                         || action == MotionEvent.ACTION_POINTER_DOWN) {
                     scheduleAutoHide();
                 }
-                return false; // don't consume — pill still receives its click
+                return false;
             }
 
             @Override
@@ -238,16 +434,9 @@ public class OverlayController {
             public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
         });
 
-        // Dismiss-by-tap inside the window: a tap on the "dead" areas (card
-        // padding, spacing between pills) hides the overlay. Pill taps are
-        // consumed by the pill itself and never reach here.
         root.setClickable(true);
         root.setOnClickListener(v -> hide());
 
-        // Dismiss-by-tap outside the window: FLAG_WATCH_OUTSIDE_TOUCH combined
-        // with FLAG_NOT_TOUCH_MODAL delivers exactly one ACTION_OUTSIDE event
-        // for taps outside our window. The original tap still reaches the
-        // window below us (map / media / etc) — which is exactly what we want.
         root.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
                 hide();
@@ -255,13 +444,6 @@ public class OverlayController {
             }
             return false;
         });
-
-        // Fix the card width to 80% of the screen IMMEDIATELY (before the
-        // first layout pass) — that way the RecyclerView inside gets the
-        // correct constraint up front and centering scroll is computed right.
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        int maxWidthPx = (int) (dm.widthPixels * MAX_WIDTH_FRACTION);
-        overlayCard.getLayoutParams().width = maxWidthPx;
 
         int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -311,69 +493,132 @@ public class OverlayController {
         }
     }
 
-    private void scrollToActive(int activeCode) {
-        if (recycler == null) return;
-        int idx = adapter.indexOf(activeCode);
-        if (idx < 0) return;
-        if (recycler.getChildCount() == 0
-                || recycler.getWidth() == 0
-                || recycler.getChildAt(0).getWidth() == 0) {
-            recycler.getViewTreeObserver().addOnGlobalLayoutListener(
-                    new ViewTreeObserver.OnGlobalLayoutListener() {
-                        @Override
-                        public void onGlobalLayout() {
-                            if (recycler == null) return;
-                            recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                            performScrollToCenter(idx);
-                        }
-                    });
+    /**
+     * Card width = N pills + recycler padding, capped at
+     * {@link #MAX_WIDTH_FRACTION} of the screen. Sized off the REAL pill count
+     * regardless of carousel virtual strip length.
+     */
+    private void adjustCardWidth(int realCount) {
+        if (overlayCard == null) return;
+        ensureWidthMetricsCached();
+        int desired = cachedSidePaddingPx * 2 + cachedPillFootprintPx * realCount;
+        int width = Math.min(desired, cachedMaxWidthPx);
+        ViewGroup.LayoutParams lp = overlayCard.getLayoutParams();
+        if (lp.width != width) {
+            lp.width = width;
+            overlayCard.setLayoutParams(lp);
+        }
+    }
+
+    private void ensureWidthMetricsCached() {
+        if (cachedPillFootprintPx > 0) return;
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        cachedMaxWidthPx = (int) (dm.widthPixels * MAX_WIDTH_FRACTION);
+        int minWidthPx = (int) context.getResources().getDimension(R.dimen.overlay_pill_min_width);
+        int spacingPx = (int) context.getResources().getDimension(R.dimen.overlay_item_spacing);
+        cachedPillFootprintPx = minWidthPx + spacingPx * 2;
+        cachedSidePaddingPx = (int) context.getResources().getDimension(R.dimen.overlay_padding_horizontal);
+    }
+
+    // ------------------------------------------------------------------
+    // Scrolling
+    // ------------------------------------------------------------------
+
+    /**
+     * Bring {@code position} to the horizontal center of the viewport.
+     * If {@code animate} is true, uses a {@link LinearSmoothScroller}. Otherwise
+     * uses {@link LinearLayoutManager#scrollToPositionWithOffset} for an
+     * instant jump — used for rebuilds where the data just changed wholesale.
+     */
+    private void scrollToCenterIndex(int position, boolean animate) {
+        if (recycler == null || position < 0) return;
+        if (!isRecyclerLaidOut()) {
+            // The recycler hasn't laid out children yet. Park a listener that
+            // fires once first layout completes — we keep a reference so
+            // dispose() can detach it explicitly if the overlay is torn down
+            // before layout ever happens.
+            removePendingLayoutListener();
+            pendingLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if (recycler == null) return;
+                    recycler.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    pendingLayoutListener = null;
+                    performScrollToCenter(position, animate);
+                }
+            };
+            recycler.getViewTreeObserver().addOnGlobalLayoutListener(pendingLayoutListener);
         } else {
-            recycler.post(() -> performScrollToCenter(idx));
+            recycler.post(() -> performScrollToCenter(position, animate));
         }
     }
 
-    private void performScrollToCenter(int idx) {
+    private boolean isRecyclerLaidOut() {
+        if (recycler == null) return false;
+        if (recycler.getChildCount() == 0 || recycler.getWidth() == 0) return false;
+        View first = recycler.getChildAt(0);
+        return first != null && first.getWidth() > 0;
+    }
+
+    private void removePendingLayoutListener() {
+        if (pendingLayoutListener != null && recycler != null) {
+            recycler.getViewTreeObserver().removeOnGlobalLayoutListener(pendingLayoutListener);
+        }
+        pendingLayoutListener = null;
+    }
+
+    private void performScrollToCenter(int position, boolean animate) {
         if (recycler == null) return;
-        applyEdgePadding();
         RecyclerView.LayoutManager lm = recycler.getLayoutManager();
-        if (lm == null) return;
-        LinearSmoothScroller scroller = new LinearSmoothScroller(recycler.getContext()) {
-            @Override
-            public int calculateDxToMakeVisible(View view, int snapPreference) {
-                RecyclerView.LayoutManager mgr = getLayoutManager();
-                if (mgr == null || !mgr.canScrollHorizontally()) return 0;
-                int left = mgr.getDecoratedLeft(view);
-                int right = mgr.getDecoratedRight(view);
-                int childCenter = (left + right) / 2;
-                int containerCenter = mgr.getWidth() / 2;
-                return containerCenter - childCenter;
-            }
-        };
-        scroller.setTargetPosition(idx);
-        lm.startSmoothScroll(scroller);
+        if (!(lm instanceof LinearLayoutManager)) return;
+        LinearLayoutManager llm = (LinearLayoutManager) lm;
+
+        if (animate) {
+            LinearSmoothScroller scroller = new LinearSmoothScroller(recycler.getContext()) {
+                @Override
+                public int calculateDxToMakeVisible(View view, int snapPreference) {
+                    RecyclerView.LayoutManager mgr = getLayoutManager();
+                    if (mgr == null || !mgr.canScrollHorizontally()) return 0;
+                    int left = mgr.getDecoratedLeft(view);
+                    int right = mgr.getDecoratedRight(view);
+                    int childCenter = (left + right) / 2;
+                    int containerCenter = mgr.getWidth() / 2;
+                    return containerCenter - childCenter;
+                }
+            };
+            scroller.setTargetPosition(position);
+            llm.startSmoothScroll(scroller);
+        } else {
+            // The recycler may have been emptied between the post() and now.
+            View first = recycler.getChildAt(0);
+            if (first == null || first.getWidth() <= 0) return;
+            int pillWidth = first.getWidth();
+            int offset = (recycler.getWidth() - pillWidth) / 2;
+            llm.scrollToPositionWithOffset(position, offset);
+        }
     }
 
-    private void applyEdgePadding() {
-        if (recycler == null || recycler.getChildCount() == 0) return;
-        View firstChild = recycler.getChildAt(0);
-        int pillWidth = firstChild.getWidth();
-        if (pillWidth <= 0) return;
-        int recyclerWidth = recycler.getWidth();
-        if (recyclerWidth <= 0) return;
-        int paddingHorizontal = (int) (context.getResources()
-                .getDimension(R.dimen.overlay_padding_horizontal));
-        int targetSideTotal = Math.max(paddingHorizontal,
-                (recyclerWidth - pillWidth) / 2);
-        if (recycler.getPaddingLeft() != targetSideTotal) {
-            recycler.setPadding(
-                    targetSideTotal,
-                    recycler.getPaddingTop(),
-                    targetSideTotal,
-                    recycler.getPaddingBottom());
-        }
+    private int findSnapPosition() {
+        if (snapHelper == null || recycler == null) return RecyclerView.NO_POSITION;
+        RecyclerView.LayoutManager lm = recycler.getLayoutManager();
+        if (lm == null) return RecyclerView.NO_POSITION;
+        View v = snapHelper.findSnapView(lm);
+        if (v == null) return RecyclerView.NO_POSITION;
+        return lm.getPosition(v);
     }
 
     private void scheduleAutoHide() {
+        scheduleAutoHide(/* force */ false);
+    }
+
+    private void scheduleAutoHide(boolean force) {
+        long now = android.os.SystemClock.uptimeMillis();
+        // Throttle: during a fling onScrolled fires every frame and the
+        // pending hide already covers any practical window — no need to
+        // tear it down and rebuild it dozens of times a second. Explicit
+        // shows pass force=true so they always (re)arm the timer.
+        if (!force && now - lastAutoHideScheduleAt < AUTO_HIDE_RESCHEDULE_MIN_MS) return;
+        lastAutoHideScheduleAt = now;
         handler.removeCallbacks(hideRunnable);
         handler.postDelayed(hideRunnable, currentAutoHideMs);
     }

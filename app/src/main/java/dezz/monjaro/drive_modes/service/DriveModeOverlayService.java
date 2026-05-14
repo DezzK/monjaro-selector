@@ -120,6 +120,7 @@ public class DriveModeOverlayService extends Service
                 this, R.style.Theme_MonjaroDriveModes);
         OverlayController c = new OverlayController(themed);
         c.setOnModeTapListener(this::handleModeTap);
+        c.setCarouselMode(settings.isCarouselMode());
         return c;
     }
 
@@ -168,6 +169,9 @@ public class DriveModeOverlayService extends Service
         if (repository != null) {
             repository.removeListener(this);
             repository.removeSupportedModesListener(this);
+            // The SDK binding lives in a singleton: clean up watcher + Car
+            // references so a future service restart starts from a clean slate.
+            repository.shutdown();
         }
         if (overlay != null) {
             overlay.dispose();
@@ -205,6 +209,9 @@ public class DriveModeOverlayService extends Service
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String key) {
         if (PreferenceKeys.KEY_MODE_ORDER.equals(key) || key == null) {
             recomputeEnabledCache(repository.getSupportedModes());
+        }
+        if (PreferenceKeys.KEY_CAROUSEL_MODE.equals(key) || key == null) {
+            if (overlay != null) overlay.setCarouselMode(settings.isCarouselMode());
         }
         // KEY_AUTO_HIDE_* are read directly at show time — no extra handling needed.
     }

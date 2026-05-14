@@ -22,7 +22,6 @@ import androidx.annotation.Nullable;
 import com.ecarx.xui.adaptapi.car.vehicle.IDriveMode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -123,23 +122,4 @@ public final class DriveModeCatalog {
         };
     }
 
-    public static int[] defaultOrderFiltered(int[] supported) {
-        int[] preferred = defaultOrder();
-        List<Integer> result = new ArrayList<>();
-        for (int code : preferred) {
-            if (contains(supported, code)) result.add(code);
-        }
-        for (int code : supported) {
-            if (!result.contains(code)) result.add(code);
-        }
-        int[] out = new int[result.size()];
-        for (int i = 0; i < out.length; i++) out[i] = result.get(i);
-        return out;
-    }
-
-    private static boolean contains(int[] array, int value) {
-        if (array == null) return false;
-        for (int v : array) if (v == value) return true;
-        return false;
-    }
 }
