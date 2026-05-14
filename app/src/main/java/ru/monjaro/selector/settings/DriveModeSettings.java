@@ -40,8 +40,27 @@ public final class DriveModeSettings {
         prefs.edit().putBoolean(PreferenceKeys.KEY_DISABLE_NATIVE_UI, value).apply();
     }
 
-    public int getAutoHideMs() {
-        return prefs.getInt(PreferenceKeys.KEY_OVERLAY_AUTO_HIDE_MS, PreferenceKeys.DEFAULT_AUTO_HIDE_MS);
+    public int getAutoHidePreviewMs() {
+        return prefs.getInt(PreferenceKeys.KEY_AUTO_HIDE_PREVIEW_MS,
+                PreferenceKeys.DEFAULT_AUTO_HIDE_PREVIEW_MS);
+    }
+
+    public void setAutoHidePreviewMs(int ms) {
+        prefs.edit().putInt(PreferenceKeys.KEY_AUTO_HIDE_PREVIEW_MS, clampAutoHide(ms)).apply();
+    }
+
+    public int getAutoHideSwitchMs() {
+        return prefs.getInt(PreferenceKeys.KEY_AUTO_HIDE_SWITCH_MS,
+                PreferenceKeys.DEFAULT_AUTO_HIDE_SWITCH_MS);
+    }
+
+    public void setAutoHideSwitchMs(int ms) {
+        prefs.edit().putInt(PreferenceKeys.KEY_AUTO_HIDE_SWITCH_MS, clampAutoHide(ms)).apply();
+    }
+
+    private static int clampAutoHide(int ms) {
+        return Math.max(PreferenceKeys.AUTO_HIDE_MIN_MS,
+                Math.min(PreferenceKeys.AUTO_HIDE_MAX_MS, ms));
     }
 
     public boolean isDebugLogIntents() {

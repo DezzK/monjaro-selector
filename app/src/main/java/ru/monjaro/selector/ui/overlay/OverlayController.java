@@ -38,9 +38,9 @@ import ru.monjaro.selector.util.Logs;
  *  - autoHide использует токен, поэтому отмена точечная и не задевает другие postDelayed.
  *  - fade-in/out через ViewPropertyAnimator (надёжнее legacy Animation API).
  *  - При повторных show() в течение autoHide-окна таймер сбрасывается.
- *  - {@link #animateStepsTo(List, int, List)} визуально проходит через
- *    промежуточные режимы (для серий 2/3 кликов), хотя фактически режим уже
- *    установлен на финальное значение.
+ *  - Любая активность пользователя внутри recycler (touch/scroll) перезапускает auto-hide.
+ *  - {@link #animateStepsTo} визуально проходит через промежуточные режимы для серий
+ *    кликов, хотя фактически режим уже установлен на финальное значение.
  */
 public class OverlayController {
 
@@ -65,7 +65,8 @@ public class OverlayController {
     private View root;
     private View overlayCard;
     private RecyclerView recycler;
-    private int autoHideMs = 3000;
+    /** Длительность auto-hide ТЕКУЩЕГО показа. Перерасчитывается при каждом show. */
+    private int currentAutoHideMs = 3000;
     private boolean attached;
     private boolean hiding;
 
@@ -77,10 +78,6 @@ public class OverlayController {
         this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     }
 
-    public void setAutoHideMs(int autoHideMs) {
-        this.autoHideMs = autoHideMs;
-    }
-
     public void setOnModeTapListener(@Nullable OnModeTapListener listener) {
         this.tapListener = listener;
         adapter.setOnPillClickListener(listener == null
@@ -89,7 +86,7 @@ public class OverlayController {
     }
 
     @MainThread
-    public void show(@NonNull List<Integer> orderedCodes, int activeCode) {
+    public void show(@NonNull List<Integer> orderedCodes, int activeCode, int autoHideMs) {
         if (orderedCodes.isEmpty()) {
             Logs.d("Overlay show skipped — пустой список режимов");
             return;
@@ -97,6 +94,7 @@ public class OverlayController {
         ensureAttached();
         if (root == null) return;
 
+        currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
         adapter.setData(new ArrayList<>(orderedCodes), activeCode);
         scrollToActive(activeCode);
@@ -112,14 +110,16 @@ public class OverlayController {
     @MainThread
     public void animateStepsTo(@NonNull List<Integer> orderedCodes,
                                int startCode,
-                               @NonNull List<Integer> stepsToHighlight) {
+                               @NonNull List<Integer> stepsToHighlight,
+                               int autoHideMs) {
         if (orderedCodes.isEmpty() || stepsToHighlight.isEmpty()) {
-            if (!orderedCodes.isEmpty()) show(orderedCodes, startCode);
+            if (!orderedCodes.isEmpty()) show(orderedCodes, startCode, autoHideMs);
             return;
         }
         ensureAttached();
         if (root == null) return;
 
+        currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
         adapter.setData(new ArrayList<>(orderedCodes), startCode);
         scrollToActive(startCode);
@@ -188,6 +188,35 @@ public class OverlayController {
         recycler.setAdapter(adapter);
         SnapHelper snap = new LinearSnapHelper();
         snap.attachToRecyclerView(recycler);
+
+        // Активность пользователя внутри оверлея (touch / drag / scroll / fling)
+        // считается взаимодействием — auto-hide перезапускается. Иначе если
+        // человек скроллит ленту выбирая режим, оверлей пропал бы через 3 секунды.
+        recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (dx != 0 || dy != 0) scheduleAutoHide();
+            }
+        });
+        recycler.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv,
+                                                 @NonNull MotionEvent e) {
+                int action = e.getActionMasked();
+                if (action == MotionEvent.ACTION_DOWN
+                        || action == MotionEvent.ACTION_MOVE
+                        || action == MotionEvent.ACTION_POINTER_DOWN) {
+                    scheduleAutoHide();
+                }
+                return false; // не консьюмим — pill по-прежнему получает click
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+        });
 
         // Dismiss-by-tap внутри окна: тап в «глухие» области (padding карточки,
         // spacing между pills) закрывает оверлей. Тапы по pill потребляются ими
@@ -266,9 +295,6 @@ public class OverlayController {
         if (recycler == null) return;
         int idx = adapter.indexOf(activeCode);
         if (idx < 0) return;
-        // Если children ещё не layout-нуты — ждём первый layout pass и потом
-        // делаем padding+scroll. Без layout child.getWidth()==0 и центрирование
-        // считается некорректно.
         if (recycler.getChildCount() == 0
                 || recycler.getWidth() == 0
                 || recycler.getChildAt(0).getWidth() == 0) {
@@ -291,10 +317,6 @@ public class OverlayController {
         applyEdgePadding();
         RecyclerView.LayoutManager lm = recycler.getLayoutManager();
         if (lm == null) return;
-        // Custom smooth scroller, который центрирует target item в видимой
-        // области RecyclerView. По умолчанию smoothScrollToPosition только
-        // делает item visible (на краю), а LinearSnapHelper срабатывает
-        // только на fling-жесты.
         LinearSmoothScroller scroller = new LinearSmoothScroller(recycler.getContext()) {
             @Override
             public int calculateDxToMakeVisible(View view, int snapPreference) {
@@ -311,12 +333,6 @@ public class OverlayController {
         lm.startSmoothScroll(scroller);
     }
 
-    /**
-     * Добавляет к RecyclerView left/right-padding, равный полуразнице между
-     * шириной RecyclerView и шириной одного pill. Без этого первый и последний
-     * pill невозможно центрировать (LayoutManager не позволит прокрутить
-     * дальше bounds).
-     */
     private void applyEdgePadding() {
         if (recycler == null || recycler.getChildCount() == 0) return;
         View firstChild = recycler.getChildAt(0);
@@ -326,10 +342,6 @@ public class OverlayController {
         if (recyclerWidth <= 0) return;
         int paddingHorizontal = (int) (context.getResources()
                 .getDimension(R.dimen.overlay_padding_horizontal));
-        // (recyclerWidth - pillWidth) / 2 — итоговый отступ от левого/правого
-        // края recycler до начала первого pill при его центрировании. Из этого
-        // вычитаем "обычный" overlay_padding_horizontal который был задан в
-        // layout, остаток — наша дополнительная edge-навеска.
         int targetSideTotal = Math.max(paddingHorizontal,
                 (recyclerWidth - pillWidth) / 2);
         if (recycler.getPaddingLeft() != targetSideTotal) {
@@ -343,7 +355,7 @@ public class OverlayController {
 
     private void scheduleAutoHide() {
         handler.removeCallbacks(hideRunnable);
-        handler.postDelayed(hideRunnable, autoHideMs);
+        handler.postDelayed(hideRunnable, currentAutoHideMs);
     }
 
     private void cancelQueuedSteps() {

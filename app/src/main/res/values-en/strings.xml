@@ -35,6 +35,12 @@
     <string name="copy_to_clipboard_cd">Copy</string>
     <string name="copied_toast">Copied</string>
 
+    <string name="duration_title">Auto-hide duration</string>
+    <string name="duration_preview">Simple overlay show</string>
+    <string name="duration_switch">After mode switch</string>
+    <string name="duration_value_seconds">%1$.1f s</string>
+    <string name="duration_caption">Touching the overlay (tap or scroll) resets the timer.</string>
+
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_description">An alternative drive-mode selector for the Geely Monjaro head unit. Receives intents from MConfig+ and provides a configurable mode list with quick switching via the physical knob or by tapping the overlay.</string>

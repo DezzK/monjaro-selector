@@ -40,6 +40,13 @@ public class DriveModeOverlayService extends Service
     public static final String ACTION_SHOW_PREVIEW =
             "ru.monjaro.selector.service.action.SHOW_PREVIEW";
 
+    /**
+     * Auto-hide после тапа по pill. Пользователь явно сделал выбор —
+     * долго держать оверлей смысла нет, достаточно короткой визуальной
+     * подтверждающей вспышки.
+     */
+    private static final int AUTO_HIDE_AFTER_TAP_MS = 500;
+
     private DriveModeRepository repository;
     private DriveModeSettings settings;
     private OverlayController overlay;
@@ -87,7 +94,6 @@ public class DriveModeOverlayService extends Service
         ContextThemeWrapper themed = new ContextThemeWrapper(
                 this, R.style.Theme_MonjaroSelector);
         OverlayController c = new OverlayController(themed);
-        c.setAutoHideMs(settings.getAutoHideMs());
         c.setOnModeTapListener(this::handleModeTap);
         return c;
     }
@@ -159,7 +165,7 @@ public class DriveModeOverlayService extends Service
         List<Integer> enabledOrder = enabledOrderCache;
         if (enabledOrder.isEmpty()) return;
         if (!enabledCodesCache.contains(newValue)) return;
-        overlay.show(enabledOrder, newValue);
+        overlay.show(enabledOrder, newValue, settings.getAutoHideSwitchMs());
     }
 
     @MainThread
@@ -171,12 +177,10 @@ public class DriveModeOverlayService extends Service
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, @Nullable String key) {
-        if (PreferenceKeys.KEY_OVERLAY_AUTO_HIDE_MS.equals(key) && overlay != null) {
-            overlay.setAutoHideMs(settings.getAutoHideMs());
-        }
         if (PreferenceKeys.KEY_MODE_ORDER.equals(key) || key == null) {
             recomputeEnabledCache(repository.getSupportedModes());
         }
+        // KEY_AUTO_HIDE_* читаются прямо в момент show — отдельной обработки не нужно.
     }
 
     /**
@@ -210,10 +214,11 @@ public class DriveModeOverlayService extends Service
         Logs.d("Knob step: direction=" + direction + ", steps=" + steps);
         if (direction == null || steps < 1) return;
         List<Integer> enabledOrder = enabledOrderCache;
+        int switchMs = settings.getAutoHideSwitchMs();
         if (enabledOrder.size() < 2) {
             Logs.d("Knob step: не из чего выбирать (enabled<2)");
             if (!enabledOrder.isEmpty()) {
-                overlay.show(enabledOrder, repository.getLastKnownMode());
+                overlay.show(enabledOrder, repository.getLastKnownMode(), switchMs);
             }
             return;
         }
@@ -224,7 +229,7 @@ public class DriveModeOverlayService extends Service
 
             List<Integer> intermediateCodes = enumerateSteps(actual, dir, steps, enabledOrder);
             if (intermediateCodes.isEmpty()) {
-                overlay.show(enabledOrder, actual);
+                overlay.show(enabledOrder, actual, switchMs);
                 return;
             }
             int finalMode = intermediateCodes.get(intermediateCodes.size() - 1);
@@ -232,9 +237,9 @@ public class DriveModeOverlayService extends Service
                 repository.setMode(finalMode, DriveModeChangeOrigin.PROGRAMMATIC);
             }
             if (intermediateCodes.size() == 1) {
-                overlay.show(enabledOrder, finalMode);
+                overlay.show(enabledOrder, finalMode, switchMs);
             } else {
-                overlay.animateStepsTo(enabledOrder, actual, intermediateCodes);
+                overlay.animateStepsTo(enabledOrder, actual, intermediateCodes, switchMs);
             }
         });
     }
@@ -245,9 +250,10 @@ public class DriveModeOverlayService extends Service
             Logs.d("Preview: нет включённых режимов");
             return;
         }
+        int previewMs = settings.getAutoHidePreviewMs();
         repository.readCurrentModeAsync(actual -> {
             int show = enabledOrder.contains(actual) ? actual : enabledOrder.get(0);
-            overlay.show(enabledOrder, show);
+            overlay.show(enabledOrder, show, previewMs);
         });
     }
 
@@ -257,7 +263,7 @@ public class DriveModeOverlayService extends Service
         Logs.d("Pill tap: " + modeCode);
         if (!enabledCodesCache.contains(modeCode)) return;
         repository.setMode(modeCode, DriveModeChangeOrigin.PROGRAMMATIC);
-        overlay.show(enabledOrderCache, modeCode);
+        overlay.show(enabledOrderCache, modeCode, AUTO_HIDE_AFTER_TAP_MS);
     }
 
     /**

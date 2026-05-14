@@ -24,9 +24,11 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.slider.Slider;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
+import java.util.Locale;
 
 import ru.monjaro.selector.BuildConfig;
 import ru.monjaro.selector.MonjaroSelectorApp;
@@ -65,6 +67,37 @@ public class MainActivity extends AppCompatActivity {
         settings = MonjaroSelectorApp.get(this).getSettings();
         setupList();
         setupControls();
+        setupDurationSliders();
+    }
+
+    private void setupDurationSliders() {
+        bindDurationSlider(
+                binding.sliderPreview,
+                binding.durationPreviewValue,
+                settings.getAutoHidePreviewMs(),
+                settings::setAutoHidePreviewMs);
+        bindDurationSlider(
+                binding.sliderSwitch,
+                binding.durationSwitchValue,
+                settings.getAutoHideSwitchMs(),
+                settings::setAutoHideSwitchMs);
+    }
+
+    private void bindDurationSlider(@NonNull Slider slider,
+                                    @NonNull TextView valueView,
+                                    int initialMs,
+                                    @NonNull java.util.function.IntConsumer onChanged) {
+        slider.setValue(initialMs);
+        valueView.setText(formatSeconds(initialMs));
+        slider.addOnChangeListener((sl, value, fromUser) -> {
+            valueView.setText(formatSeconds((int) value));
+            if (fromUser) onChanged.accept((int) value);
+        });
+    }
+
+    private String formatSeconds(int ms) {
+        return String.format(Locale.getDefault(),
+                getString(R.string.duration_value_seconds), ms / 1000f);
     }
 
     @Override

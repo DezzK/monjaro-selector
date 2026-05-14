@@ -35,6 +35,12 @@
     <string name="copy_to_clipboard_cd">Скопировать</string>
     <string name="copied_toast">Скопировано</string>
 
+    <string name="duration_title">Длительность отображения</string>
+    <string name="duration_preview">Простой показ оверлея</string>
+    <string name="duration_switch">При переключении режима</string>
+    <string name="duration_value_seconds">%1$.1f с</string>
+    <string name="duration_caption">Касание оверлея (тап или скролл) сбрасывает таймер.</string>
+
     <string name="about_title">О программе</string>
     <string name="about_version">Версия %1$s</string>
     <string name="about_description">Альтернативный селектор режимов вождения для головного устройства Geely Monjaro. Перехватывает интенты от MConfig+ и предоставляет настраиваемый список режимов с быстрым переключением через physical knob или тап по оверлею.</string>
