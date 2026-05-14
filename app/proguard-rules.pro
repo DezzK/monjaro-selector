@@ -1,0 +1,4 @@
+-keep class com.ecarx.** { *; }
+-keep class ecarx.** { *; }
+-dontwarn com.ecarx.**
+-dontwarn ecarx.**

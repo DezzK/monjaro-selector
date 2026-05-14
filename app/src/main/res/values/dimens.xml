@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="page_padding">24dp</dimen>
+    <dimen name="card_corner">20dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="row_height">72dp</dimen>
+    <dimen name="row_icon">36dp</dimen>
+    <dimen name="overlay_corner">48dp</dimen>
+    <dimen name="overlay_padding_horizontal">56dp</dimen>
+    <dimen name="overlay_padding_vertical">40dp</dimen>
+    <dimen name="overlay_pill_icon">132dp</dimen>
+    <dimen name="overlay_pill_icon_image">78dp</dimen>
+    <dimen name="overlay_pill_label">24sp</dimen>
+    <dimen name="overlay_pill_min_width">180dp</dimen>
+    <dimen name="overlay_item_spacing">12dp</dimen>
+</resources>

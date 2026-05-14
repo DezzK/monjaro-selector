@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ===== Dark theme (values-night/) ===== -->
+    <color name="m3_primary">#E6B85C</color>
+    <color name="m3_on_primary">#1A1A1A</color>
+    <color name="m3_background">#0F1116</color>
+    <color name="m3_surface">#161922</color>
+    <color name="m3_surface_variant">#1E2129</color>
+    <color name="m3_on_surface">#E6E6EA</color>
+    <color name="m3_on_surface_variant">#A4A8B2</color>
+    <color name="m3_outline">#3A3D45</color>
+
+    <color name="overlay_card">#E61B1E27</color>
+    <color name="overlay_stroke">#33FFFFFF</color>
+    <color name="pill_active_bg">#33FFFFFF</color>
+    <color name="pill_inactive_bg">#00FFFFFF</color>
+
+    <!-- Dark-варианты accent-палитры — посветлее для контраста на тёмном фоне -->
+    <color name="accent_comfort">#8DAFFF</color>
+    <color name="accent_eco">#7DDDA2</color>
+    <color name="accent_sport">#FF7B5B</color>
+    <color name="accent_snow">#A8D8FF</color>
+    <color name="accent_offroad">#C49A6C</color>
+    <color name="accent_mud">#9C7B4F</color>
+    <color name="accent_sand">#E6C97A</color>
+    <color name="accent_rock">#B0B0B8</color>
+    <color name="accent_power">#FFD15B</color>
+    <color name="accent_hybrid">#7BC8C8</color>
+    <color name="accent_pure">#7BC8FF</color>
+    <color name="accent_awd">#A0A8B8</color>
+    <color name="accent_custom">#D0A0FF</color>
+    <color name="accent_neutral">#E6B85C</color>
+</resources>

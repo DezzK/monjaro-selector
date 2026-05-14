@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android Studio captures
+captures/
+
+# OS junk
+.DS_Store
+Thumbs.db

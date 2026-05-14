@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ===== Light theme defaults (values/) ===== -->
+    <color name="m3_primary">#B9852E</color>
+    <color name="m3_on_primary">#FFFFFF</color>
+    <color name="m3_background">#FBFAF7</color>
+    <color name="m3_surface">#FFFFFF</color>
+    <color name="m3_surface_variant">#F2F0EA</color>
+    <color name="m3_on_surface">#1A1A1A</color>
+    <color name="m3_on_surface_variant">#5F6266</color>
+    <color name="m3_outline">#D8D6CE</color>
+
+    <!-- Overlay & pills. На светлом фоне активный pill подсвечивается
+         заметным тёмным фоном; неактивный — полностью прозрачный. -->
+    <color name="overlay_card">#F2FAFAFA</color>
+    <color name="overlay_stroke">#33000000</color>
+    <color name="pill_active_bg">#1F000000</color>
+    <color name="pill_inactive_bg">#00000000</color>
+
+    <!-- Drive-mode accents — общие для обеих тем, насыщенные для контраста на белом. -->
+    <color name="accent_comfort">#3963D8</color>
+    <color name="accent_eco">#1F9E58</color>
+    <color name="accent_sport">#E04A2C</color>
+    <color name="accent_snow">#3B95E0</color>
+    <color name="accent_offroad">#8E5C2E</color>
+    <color name="accent_mud">#6B4A2A</color>
+    <color name="accent_sand">#B58F34</color>
+    <color name="accent_rock">#62656D</color>
+    <color name="accent_power">#C0901C</color>
+    <color name="accent_hybrid">#2E9090</color>
+    <color name="accent_pure">#2E86C0</color>
+    <color name="accent_awd">#586068</color>
+    <color name="accent_custom">#7A4FC0</color>
+    <color name="accent_neutral">#B9852E</color>
+</resources>

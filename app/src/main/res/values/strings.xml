@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Monjaro Selector</string>
+
+    <string name="title_settings">Селектор режимов</string>
+    <string name="subtitle_settings">Перетащите для изменения порядка. Снимите галочку, чтобы пропустить режим при прокрутке.</string>
+    <string name="reset_order">Сбросить порядок</string>
+    <string name="order_reset_toast">Порядок сброшен</string>
+    <string name="show_overlay_now">Показать оверлей сейчас</string>
+
+    <string name="mconfig_integration_title">Интеграция с MConfig+</string>
+    <string name="mconfig_integration_caption">Для блокировки штатного действия физического селектора используйте MConfig+: настройте knob так, чтобы он отправлял нам интенты.</string>
+    <string name="mconfig_integration_show">Показать инструкцию</string>
+
+    <string name="mconfig_integration_dialog_title">Настройка MConfig+</string>
+    <string name="mconfig_integration_dialog_close">Понятно</string>
+
+    <string name="mconfig_intro">В MConfig+ для нужного слота выберите действие «Отправить намерение» и укажите Intent и Package из списка ниже. Тап по строке копирует значение в буфер обмена.</string>
+    <string name="mconfig_section_switch">Переключение режима (Click 1)</string>
+    <string name="mconfig_section_series">Серии быстрых кликов (опционально)</string>
+    <string name="mconfig_section_show">Показать оверлей без смены режима</string>
+    <string name="mconfig_section_package">Package — общее для всех интентов</string>
+
+    <string name="mconfig_label_click_left">Клик влево</string>
+    <string name="mconfig_label_click_right">Клик вправо</string>
+    <string name="mconfig_label_2x_left">2× влево</string>
+    <string name="mconfig_label_3x_left">3× влево</string>
+    <string name="mconfig_label_2x_right">2× вправо</string>
+    <string name="mconfig_label_3x_right">3× вправо</string>
+    <string name="mconfig_label_show_overlay">Кнопка на руле / тап</string>
+    <string name="mconfig_label_package">Имя пакета</string>
+
+    <string name="mconfig_footer">Серии 2/3 кликов в MConfig+ диспетчатся одним интентом (а не повторами Click 1) — настраивайте слоты по необходимости или оставьте пустыми, тогда серия проглотится.</string>
+
+    <string name="copy_to_clipboard_cd">Скопировать</string>
+    <string name="copied_toast">Скопировано</string>
+
+    <string name="about_title">О программе</string>
+    <string name="about_version">Версия %1$s</string>
+    <string name="about_description">Альтернативный селектор режимов вождения для головного устройства Geely Monjaro. Перехватывает интенты от MConfig+ и предоставляет настраиваемый список режимов с быстрым переключением через physical knob или тап по оверлею.</string>
+    <string name="about_author_label">Автор</string>
+    <string name="about_author">DezzK</string>
+    <string name="about_email">https://github.com/DezzK</string>
+    <string name="about_copyright">© 2026 DezzK. Все права защищены.</string>
+    <string name="about_close">Закрыть</string>
+
+    <string name="notification_channel_name">Селектор режимов</string>
+    <string name="notification_channel_description">Фоновое отслеживание изменения режима вождения</string>
+    <string name="notification_title">Селектор режимов активен</string>
+    <string name="notification_text">Слежу за переключением режимов</string>
+
+    <string name="permission_overlay_title">Требуется разрешение</string>
+    <string name="permission_overlay_message">Для оверлея поверх других приложений нужно дать разрешение «Поверх других приложений».</string>
+    <string name="permission_overlay_grant">Открыть настройки</string>
+    <string name="permission_overlay_cancel">Позже</string>
+
+
+    <!-- Drive mode labels -->
+    <string name="mode_comfort">Комфорт</string>
+    <string name="mode_eco">Эко</string>
+    <string name="mode_eco_plus">Эко+</string>
+    <string name="mode_dynamic">Спорт</string>
+    <string name="mode_sport_plus">Спорт+</string>
+    <string name="mode_normal">Нормальный</string>
+    <string name="mode_snow">Снег</string>
+    <string name="mode_offroad">Бездорожье</string>
+    <string name="mode_mud">Грязь</string>
+    <string name="mode_sand">Песок</string>
+    <string name="mode_rock">Камни</string>
+    <string name="mode_power">Мощность</string>
+    <string name="mode_hybrid">Гибрид</string>
+    <string name="mode_pure">Электро</string>
+    <string name="mode_awd">AWD</string>
+    <string name="mode_eawd">eAWD</string>
+    <string name="mode_custom">Custom</string>
+    <string name="mode_adaptive">Адаптивный</string>
+    <string name="mode_hdc">HDC</string>
+    <string name="mode_phev">PHEV</string>
+    <string name="mode_eco_hev_phev">Эко HEV</string>
+    <string name="mode_save">SAVE</string>
+    <string name="mode_xc">XC</string>
+    <string name="mode_unknown">Авто</string>
+</resources>
