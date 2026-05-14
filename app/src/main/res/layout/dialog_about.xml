@@ -65,7 +65,7 @@
             android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
         <TextView
-            android:id="@+id/about_email"
+            android:id="@+id/about_telegram"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
@@ -73,7 +73,7 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="4dp"
-            android:text="@string/about_email"
+            android:text="@string/about_telegram"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="?attr/colorPrimary" />
 

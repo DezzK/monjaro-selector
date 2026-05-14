@@ -45,9 +45,9 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_description">An alternative drive-mode selector for the Geely Monjaro head unit. Receives intents from MConfig+ and provides a configurable mode list with quick switching via the physical knob or by tapping the overlay.</string>
     <string name="about_author_label">Author</string>
-    <string name="about_author">DezzK</string>
-    <string name="about_email">https://github.com/DezzK</string>
-    <string name="about_copyright">© 2026 DezzK. All rights reserved.</string>
+    <string name="about_author">Dezz</string>
+    <string name="about_telegram">@DezzK</string>
+    <string name="about_copyright">© 2026 Dezz. All rights reserved.</string>
     <string name="about_close">Close</string>
 
     <string name="notification_channel_name">Drive mode selector</string>

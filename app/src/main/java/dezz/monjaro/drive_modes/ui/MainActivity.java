@@ -1,5 +1,5 @@
 /*
- * Copyright © 2026 DezzK (https://github.com/DezzK)
+ * Copyright © 2026 Dezz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -289,14 +289,15 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) root.findViewById(R.id.about_app_name)).setText(R.string.app_name);
         ((TextView) root.findViewById(R.id.about_version))
                 .setText(getString(R.string.about_version, BuildConfig.VERSION_NAME));
-        TextView email = root.findViewById(R.id.about_email);
-        email.setOnClickListener(v -> {
-            Intent mailto = new Intent(Intent.ACTION_SENDTO,
-                    Uri.parse("mailto:" + email.getText().toString()));
+        TextView telegram = root.findViewById(R.id.about_telegram);
+        telegram.setOnClickListener(v -> {
+            String text = telegram.getText().toString();
+            String handle = text.startsWith("@") ? text.substring(1) : text;
+            Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/" + handle));
             try {
-                startActivity(mailto);
+                startActivity(open);
             } catch (Throwable ignored) {
-                copyToClipboard(getString(R.string.about_email), email.getText().toString());
+                copyToClipboard(getString(R.string.about_telegram), text);
             }
         });
         new AlertDialog.Builder(this)

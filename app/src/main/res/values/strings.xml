@@ -45,9 +45,9 @@
     <string name="about_version">Версия %1$s</string>
     <string name="about_description">Альтернативный селектор режимов вождения для головного устройства Geely Monjaro. Перехватывает интенты от MConfig+ и предоставляет настраиваемый список режимов с быстрым переключением через physical knob или тап по оверлею.</string>
     <string name="about_author_label">Автор</string>
-    <string name="about_author">DezzK</string>
-    <string name="about_email">https://github.com/DezzK</string>
-    <string name="about_copyright">© 2026 DezzK. Все права защищены.</string>
+    <string name="about_author">Dezz</string>
+    <string name="about_telegram">@DezzK</string>
+    <string name="about_copyright">© 2026 Dezz. Все права защищены.</string>
     <string name="about_close">Закрыть</string>
 
     <string name="notification_channel_name">Селектор режимов</string>
