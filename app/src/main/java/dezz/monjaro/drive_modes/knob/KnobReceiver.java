@@ -61,7 +61,7 @@ public class KnobReceiver extends BroadcastReceiver {
         if (!isSenderTrusted()) return;
 
         String action = intent.getAction();
-        if (KnobIntents.ACTION_SHOW_OVERLAY.equals(action)) {
+        if (KnobIntents.ACTION_SHOW.equals(action)) {
             Logs.d("Knob intent: " + action + " (show overlay)");
             Intent svc = new Intent(context, DriveModeOverlayService.class);
             svc.setAction(DriveModeOverlayService.ACTION_SHOW_PREVIEW);

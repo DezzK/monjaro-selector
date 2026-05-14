@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
         addCopyableRow(container, R.string.mconfig_label_next_3, KnobIntents.ACTION_NEXT_3);
 
         addSectionHeader(container, R.string.mconfig_section_show);
-        addCopyableRow(container, R.string.mconfig_label_show_overlay, KnobIntents.ACTION_SHOW_OVERLAY);
+        addCopyableRow(container, R.string.mconfig_label_show_overlay, KnobIntents.ACTION_SHOW);
 
         addSectionHeader(container, R.string.mconfig_section_package);
         addCopyableRow(container, R.string.mconfig_label_package, getPackageName());

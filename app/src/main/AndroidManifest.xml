@@ -56,7 +56,7 @@
                 <action android:name="dezz.monjaro.drive_modes.NEXT_1" />
                 <action android:name="dezz.monjaro.drive_modes.NEXT_2" />
                 <action android:name="dezz.monjaro.drive_modes.NEXT_3" />
-                <action android:name="dezz.monjaro.drive_modes.SHOW_OVERLAY" />
+                <action android:name="dezz.monjaro.drive_modes.SHOW" />
             </intent-filter>
         </receiver>
 

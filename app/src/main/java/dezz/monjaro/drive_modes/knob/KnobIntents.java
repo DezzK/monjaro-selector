@@ -45,8 +45,8 @@ public final class KnobIntents {
      * Just show the overlay with the current mode. Does not change the mode.
      * Used for the "steering wheel button -> show selector to tap" scenario.
      */
-    public static final String ACTION_SHOW_OVERLAY =
-            "dezz.monjaro.drive_modes.SHOW_OVERLAY";
+    public static final String ACTION_SHOW =
+            "dezz.monjaro.drive_modes.SHOW";
 
     private KnobIntents() {}
 }
