@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-            tools:text="Monjaro Selector" />
+            tools:text="Monjaro Drive Mode Selector" />
 
         <TextView
             android:id="@+id/about_version"

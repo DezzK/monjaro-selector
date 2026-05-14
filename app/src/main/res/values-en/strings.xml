@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Monjaro Selector</string>
+    <string name="app_name">Monjaro Drive Mode Selector</string>
 
     <string name="title_settings">Drive mode selector</string>
     <string name="subtitle_settings">Drag to reorder. Uncheck a mode to skip it when scrolling.</string>

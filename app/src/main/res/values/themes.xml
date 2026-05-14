@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Light defaults — DayNight parent сам выбирает нужный набор цветов из
          values/ или values-night/ в зависимости от системной темы. -->
-    <style name="Theme.MonjaroSelector" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.MonjaroDriveModes" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/m3_primary</item>
         <item name="colorOnPrimary">@color/m3_on_primary</item>
         <item name="android:colorBackground">@color/m3_background</item>

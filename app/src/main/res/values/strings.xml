@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Monjaro Selector</string>
+    <string name="app_name">Monjaro Drive Mode Selector</string>
 
     <string name="title_settings">Селектор режимов</string>
     <string name="subtitle_settings">Перетащите для изменения порядка. Снимите галочку, чтобы пропустить режим при прокрутке.</string>

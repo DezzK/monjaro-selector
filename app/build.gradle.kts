@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "ru.monjaro.selector"
+    namespace = "dezz.monjaro.drive_modes"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "ru.monjaro.selector"
+        applicationId = "dezz.monjaro.drive_modes"
         minSdk = 28
         targetSdk = 35
         versionCode = 1

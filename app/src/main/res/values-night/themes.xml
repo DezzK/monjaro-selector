@@ -3,7 +3,7 @@
     <!-- Dark overrides — наследуем все цветовые refs из родителя (они уже
          подтянут значения из values-night/colors.xml), меняем только
          флаги системных бар. -->
-    <style name="Theme.MonjaroSelector" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.MonjaroDriveModes" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/m3_primary</item>
         <item name="colorOnPrimary">@color/m3_on_primary</item>
         <item name="android:colorBackground">@color/m3_background</item>
