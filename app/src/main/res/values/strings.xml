@@ -21,12 +21,12 @@
     <string name="mconfig_section_show">Показать оверлей без смены режима</string>
     <string name="mconfig_section_package">Package — общее для всех интентов</string>
 
-    <string name="mconfig_label_click_left">Клик влево</string>
-    <string name="mconfig_label_click_right">Клик вправо</string>
-    <string name="mconfig_label_2x_left">2× влево</string>
-    <string name="mconfig_label_3x_left">3× влево</string>
-    <string name="mconfig_label_2x_right">2× вправо</string>
-    <string name="mconfig_label_3x_right">3× вправо</string>
+    <string name="mconfig_label_prev">Предыдущий режим</string>
+    <string name="mconfig_label_next">Следующий режим</string>
+    <string name="mconfig_label_prev_2">2× назад</string>
+    <string name="mconfig_label_prev_3">3× назад</string>
+    <string name="mconfig_label_next_2">2× вперёд</string>
+    <string name="mconfig_label_next_3">3× вперёд</string>
     <string name="mconfig_label_show_overlay">Кнопка на руле / тап</string>
     <string name="mconfig_label_package">Имя пакета</string>
 

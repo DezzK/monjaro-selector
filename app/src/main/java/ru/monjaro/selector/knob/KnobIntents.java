@@ -1,29 +1,28 @@
 package ru.monjaro.selector.knob;
 
 /**
- * Intent actions для приёма событий поворота физического селектора drive mode.
- * MConfig+ настраивается на отправку этих intent'ов при срабатывании knob.
+ * Intent actions для приёма событий переключения режима от MConfig+.
  *
  * Привязка для MConfig+:
- *   knobLeftClick1Cfg  → "Отправить намерение" → action: KNOB_LEFT_1   package: ru.monjaro.selector
- *   knobRightClick1Cfg → "Отправить намерение" → action: KNOB_RIGHT_1  package: ru.monjaro.selector
- * (опционально для серий 2/3 кликов — отдельные действия в наших настройках).
+ *   knobLeftClick1Cfg  → «Отправить намерение» → action: PREV_1   package: ru.monjaro.selector
+ *   knobRightClick1Cfg → «Отправить намерение» → action: NEXT_1   package: ru.monjaro.selector
+ * (опционально для серий 2/3 кликов — отдельные actions).
  */
 public final class KnobIntents {
 
-    public static final String ACTION_KNOB_LEFT_1 =
-            "ru.monjaro.selector.action.KNOB_LEFT_1";
-    public static final String ACTION_KNOB_LEFT_2 =
-            "ru.monjaro.selector.action.KNOB_LEFT_2";
-    public static final String ACTION_KNOB_LEFT_3 =
-            "ru.monjaro.selector.action.KNOB_LEFT_3";
+    public static final String ACTION_PREV_1 =
+            "ru.monjaro.selector.action.PREV_1";
+    public static final String ACTION_PREV_2 =
+            "ru.monjaro.selector.action.PREV_2";
+    public static final String ACTION_PREV_3 =
+            "ru.monjaro.selector.action.PREV_3";
 
-    public static final String ACTION_KNOB_RIGHT_1 =
-            "ru.monjaro.selector.action.KNOB_RIGHT_1";
-    public static final String ACTION_KNOB_RIGHT_2 =
-            "ru.monjaro.selector.action.KNOB_RIGHT_2";
-    public static final String ACTION_KNOB_RIGHT_3 =
-            "ru.monjaro.selector.action.KNOB_RIGHT_3";
+    public static final String ACTION_NEXT_1 =
+            "ru.monjaro.selector.action.NEXT_1";
+    public static final String ACTION_NEXT_2 =
+            "ru.monjaro.selector.action.NEXT_2";
+    public static final String ACTION_NEXT_3 =
+            "ru.monjaro.selector.action.NEXT_3";
 
     /**
      * Просто показать оверлей с текущим режимом. Без смены режима.

@@ -28,8 +28,8 @@ public class KnobReceiver extends BroadcastReceiver {
     public static final String EXTRA_DIRECTION = "ru.monjaro.selector.extra.DIRECTION";
     public static final String EXTRA_STEPS = "ru.monjaro.selector.extra.STEPS";
 
-    public static final String DIRECTION_LEFT = "LEFT";
-    public static final String DIRECTION_RIGHT = "RIGHT";
+    public static final String DIRECTION_PREV = "PREV";
+    public static final String DIRECTION_NEXT = "NEXT";
 
     private static final Set<String> TRUSTED_SENDERS = new HashSet<>(Arrays.asList(
             "plus.monjaro",        // MConfig+
@@ -55,12 +55,12 @@ public class KnobReceiver extends BroadcastReceiver {
         String direction;
         int steps;
         switch (action) {
-            case KnobIntents.ACTION_KNOB_LEFT_1:  direction = DIRECTION_LEFT;  steps = 1; break;
-            case KnobIntents.ACTION_KNOB_LEFT_2:  direction = DIRECTION_LEFT;  steps = 2; break;
-            case KnobIntents.ACTION_KNOB_LEFT_3:  direction = DIRECTION_LEFT;  steps = 3; break;
-            case KnobIntents.ACTION_KNOB_RIGHT_1: direction = DIRECTION_RIGHT; steps = 1; break;
-            case KnobIntents.ACTION_KNOB_RIGHT_2: direction = DIRECTION_RIGHT; steps = 2; break;
-            case KnobIntents.ACTION_KNOB_RIGHT_3: direction = DIRECTION_RIGHT; steps = 3; break;
+            case KnobIntents.ACTION_PREV_1: direction = DIRECTION_PREV; steps = 1; break;
+            case KnobIntents.ACTION_PREV_2: direction = DIRECTION_PREV; steps = 2; break;
+            case KnobIntents.ACTION_PREV_3: direction = DIRECTION_PREV; steps = 3; break;
+            case KnobIntents.ACTION_NEXT_1: direction = DIRECTION_NEXT; steps = 1; break;
+            case KnobIntents.ACTION_NEXT_2: direction = DIRECTION_NEXT; steps = 2; break;
+            case KnobIntents.ACTION_NEXT_3: direction = DIRECTION_NEXT; steps = 3; break;
             default: return;
         }
         Logs.d("Knob intent: " + action + " (direction=" + direction + ", steps=" + steps + ")");
@@ -90,7 +90,6 @@ public class KnobReceiver extends BroadcastReceiver {
         }
         String sender = getSentFromPackage();
         if (sender == null) {
-            // System broadcasts либо отправитель неизвестен — пропускаем.
             return true;
         }
         if (TRUSTED_SENDERS.contains(sender)) return true;

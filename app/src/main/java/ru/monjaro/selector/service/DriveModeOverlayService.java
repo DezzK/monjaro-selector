@@ -223,7 +223,7 @@ public class DriveModeOverlayService extends Service
             return;
         }
         repository.readCurrentModeAsync(actual -> {
-            RotationDirection dir = KnobReceiver.DIRECTION_LEFT.equals(direction)
+            RotationDirection dir = KnobReceiver.DIRECTION_PREV.equals(direction)
                     ? RotationDirection.BACKWARD
                     : RotationDirection.FORWARD;
 

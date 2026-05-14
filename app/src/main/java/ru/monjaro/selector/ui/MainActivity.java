@@ -207,14 +207,14 @@ public class MainActivity extends AppCompatActivity {
         addParagraph(container, getString(R.string.mconfig_intro));
 
         addSectionHeader(container, R.string.mconfig_section_switch);
-        addCopyableRow(container, R.string.mconfig_label_click_left,  KnobIntents.ACTION_KNOB_LEFT_1);
-        addCopyableRow(container, R.string.mconfig_label_click_right, KnobIntents.ACTION_KNOB_RIGHT_1);
+        addCopyableRow(container, R.string.mconfig_label_prev, KnobIntents.ACTION_PREV_1);
+        addCopyableRow(container, R.string.mconfig_label_next, KnobIntents.ACTION_NEXT_1);
 
         addSectionHeader(container, R.string.mconfig_section_series);
-        addCopyableRow(container, R.string.mconfig_label_2x_left,  KnobIntents.ACTION_KNOB_LEFT_2);
-        addCopyableRow(container, R.string.mconfig_label_3x_left,  KnobIntents.ACTION_KNOB_LEFT_3);
-        addCopyableRow(container, R.string.mconfig_label_2x_right, KnobIntents.ACTION_KNOB_RIGHT_2);
-        addCopyableRow(container, R.string.mconfig_label_3x_right, KnobIntents.ACTION_KNOB_RIGHT_3);
+        addCopyableRow(container, R.string.mconfig_label_prev_2, KnobIntents.ACTION_PREV_2);
+        addCopyableRow(container, R.string.mconfig_label_prev_3, KnobIntents.ACTION_PREV_3);
+        addCopyableRow(container, R.string.mconfig_label_next_2, KnobIntents.ACTION_NEXT_2);
+        addCopyableRow(container, R.string.mconfig_label_next_3, KnobIntents.ACTION_NEXT_3);
 
         addSectionHeader(container, R.string.mconfig_section_show);
         addCopyableRow(container, R.string.mconfig_label_show_overlay, KnobIntents.ACTION_SHOW_OVERLAY);

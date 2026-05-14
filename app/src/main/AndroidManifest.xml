@@ -50,12 +50,12 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="ru.monjaro.selector.action.KNOB_LEFT_1" />
-                <action android:name="ru.monjaro.selector.action.KNOB_LEFT_2" />
-                <action android:name="ru.monjaro.selector.action.KNOB_LEFT_3" />
-                <action android:name="ru.monjaro.selector.action.KNOB_RIGHT_1" />
-                <action android:name="ru.monjaro.selector.action.KNOB_RIGHT_2" />
-                <action android:name="ru.monjaro.selector.action.KNOB_RIGHT_3" />
+                <action android:name="ru.monjaro.selector.action.PREV_1" />
+                <action android:name="ru.monjaro.selector.action.PREV_2" />
+                <action android:name="ru.monjaro.selector.action.PREV_3" />
+                <action android:name="ru.monjaro.selector.action.NEXT_1" />
+                <action android:name="ru.monjaro.selector.action.NEXT_2" />
+                <action android:name="ru.monjaro.selector.action.NEXT_3" />
                 <action android:name="ru.monjaro.selector.action.SHOW_OVERLAY" />
             </intent-filter>
         </receiver>

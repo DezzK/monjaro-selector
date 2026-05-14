@@ -34,7 +34,7 @@
             android:fontFamily="monospace"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             android:textColor="?attr/colorOnSurface"
-            tools:text="ru.monjaro.selector.action.KNOB_LEFT_1" />
+            tools:text="ru.monjaro.selector.action.PREV_1" />
     </LinearLayout>
 
     <ImageView
