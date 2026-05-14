@@ -41,10 +41,10 @@
                 android:value="ecarx_drive_mode_overlay" />
         </service>
 
-        <!-- Приём событий knob от MConfig+ (см. docs/mconfig-plus-research.md).
-             В MConfig+ настраиваем knobLeft/Right Click{1,2,3} → "Отправить намерение"
-             с action одним из ru.monjaro.selector.action.KNOB_* и
-             package ru.monjaro.selector. -->
+        <!-- Receives knob events from MConfig+ (see docs/mconfig-plus-research.md).
+             In MConfig+ configure knobLeft/Right Click{1,2,3} -> "Send intent"
+             with action set to one of ru.monjaro.selector.action.PREV_*/NEXT_*
+             and package ru.monjaro.selector. -->
         <receiver
             android:name=".knob.KnobReceiver"
             android:enabled="true"

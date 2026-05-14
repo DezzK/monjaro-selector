@@ -159,7 +159,7 @@
                             android:minWidth="56dp"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             android:textColor="?attr/colorPrimary"
-                            tools:text="5.0 с" />
+                            tools:text="5.0 s" />
                     </LinearLayout>
 
                     <com.google.android.material.slider.Slider
@@ -191,7 +191,7 @@
                             android:minWidth="56dp"
                             android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                             android:textColor="?attr/colorPrimary"
-                            tools:text="3.0 с" />
+                            tools:text="3.0 s" />
                     </LinearLayout>
 
                     <com.google.android.material.slider.Slider

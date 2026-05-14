@@ -21,9 +21,10 @@ public class MonjaroSelectorApp extends Application {
         super.onCreate();
         settings = new DriveModeSettings(this);
         DriveModeRepository.get().init(this);
-        // Сервис стартует из BootReceiver (на boot) или из MainActivity.onResume
-        // (когда пользователь даёт overlay-permission). Здесь не стартуем — чтобы
-        // не было гонки с BootReceiver и не пробовать без overlay-permission.
+        // The service is started either from BootReceiver (on boot) or from
+        // MainActivity.onResume (when the user grants overlay permission).
+        // We do not start it here to avoid racing with BootReceiver and to
+        // avoid attempting a start without overlay permission.
     }
 
     public DriveModeSettings getSettings() {
@@ -38,7 +39,7 @@ public class MonjaroSelectorApp extends Application {
         boolean canOverlay = Build.VERSION.SDK_INT < Build.VERSION_CODES.M
                 || Settings.canDrawOverlays(this);
         if (!canOverlay) {
-            Logs.w("Нет разрешения SYSTEM_ALERT_WINDOW — сервис не стартую");
+            Logs.w("No SYSTEM_ALERT_WINDOW permission — not starting the service");
             return;
         }
         Intent intent = new Intent(this, DriveModeOverlayService.class);

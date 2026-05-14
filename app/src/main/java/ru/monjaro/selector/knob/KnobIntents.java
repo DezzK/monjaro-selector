@@ -1,12 +1,12 @@
 package ru.monjaro.selector.knob;
 
 /**
- * Intent actions для приёма событий переключения режима от MConfig+.
+ * Intent actions used to receive mode switch events from MConfig+.
  *
- * Привязка для MConfig+:
- *   knobLeftClick1Cfg  → «Отправить намерение» → action: PREV_1   package: ru.monjaro.selector
- *   knobRightClick1Cfg → «Отправить намерение» → action: NEXT_1   package: ru.monjaro.selector
- * (опционально для серий 2/3 кликов — отдельные actions).
+ * Binding in MConfig+:
+ *   knobLeftClick1Cfg  -> "Send intent" -> action: PREV_1   package: ru.monjaro.selector
+ *   knobRightClick1Cfg -> "Send intent" -> action: NEXT_1   package: ru.monjaro.selector
+ * (separate actions for 2/3-click series are optional).
  */
 public final class KnobIntents {
 
@@ -25,8 +25,8 @@ public final class KnobIntents {
             "ru.monjaro.selector.action.NEXT_3";
 
     /**
-     * Просто показать оверлей с текущим режимом. Без смены режима.
-     * Используется для сценария «кнопка на руле → показать селектор для тапа».
+     * Just show the overlay with the current mode. Does not change the mode.
+     * Used for the "steering wheel button -> show selector to tap" scenario.
      */
     public static final String ACTION_SHOW_OVERLAY =
             "ru.monjaro.selector.action.SHOW_OVERLAY";

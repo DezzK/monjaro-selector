@@ -32,15 +32,17 @@ import ru.monjaro.selector.R;
 import ru.monjaro.selector.util.Logs;
 
 /**
- * Управляет WindowManager-оверлеем: создание, обновление, fade-in/out, auto-hide.
+ * Owns the WindowManager overlay: creation, updates, fade-in/out, auto-hide.
  *
- * Ключевые гарантии:
- *  - autoHide использует токен, поэтому отмена точечная и не задевает другие postDelayed.
- *  - fade-in/out через ViewPropertyAnimator (надёжнее legacy Animation API).
- *  - При повторных show() в течение autoHide-окна таймер сбрасывается.
- *  - Любая активность пользователя внутри recycler (touch/scroll) перезапускает auto-hide.
- *  - {@link #animateStepsTo} визуально проходит через промежуточные режимы для серий
- *    кликов, хотя фактически режим уже установлен на финальное значение.
+ * Key guarantees:
+ *  - autoHide uses a token Runnable, so cancellation is targeted and does not
+ *    affect other postDelayed callbacks.
+ *  - fade-in/out via ViewPropertyAnimator (more reliable than legacy Animation).
+ *  - Repeated show() within the auto-hide window resets the timer.
+ *  - Any user activity inside the recycler (touch/scroll) restarts auto-hide.
+ *  - {@link #animateStepsTo} visually walks through intermediate modes for
+ *    multi-click series, even though the actual mode is already set to the
+ *    final value.
  */
 public class OverlayController {
 
@@ -65,7 +67,7 @@ public class OverlayController {
     private View root;
     private View overlayCard;
     private RecyclerView recycler;
-    /** Длительность auto-hide ТЕКУЩЕГО показа. Перерасчитывается при каждом show. */
+    /** Auto-hide duration for the CURRENT show. Recomputed on every show call. */
     private int currentAutoHideMs = 3000;
     private boolean attached;
     private boolean hiding;
@@ -88,7 +90,7 @@ public class OverlayController {
     @MainThread
     public void show(@NonNull List<Integer> orderedCodes, int activeCode, int autoHideMs) {
         if (orderedCodes.isEmpty()) {
-            Logs.d("Overlay show skipped — пустой список режимов");
+            Logs.d("Overlay show skipped — empty mode list");
             return;
         }
         ensureAttached();
@@ -103,9 +105,9 @@ public class OverlayController {
     }
 
     /**
-     * Показать оверлей со стартового активного и затем плавно пройти через
-     * промежуточные коды к финальному. Каждый шаг — {@link #INTERMEDIATE_STEP_MS} мс.
-     * Авто-hide планируется после завершения всех шагов.
+     * Show the overlay from the starting active code and then smoothly walk
+     * through the intermediate codes to the final one. Each step takes
+     * {@link #INTERMEDIATE_STEP_MS} ms. Auto-hide is scheduled after the last step.
      */
     @MainThread
     public void animateStepsTo(@NonNull List<Integer> orderedCodes,
@@ -189,9 +191,10 @@ public class OverlayController {
         SnapHelper snap = new LinearSnapHelper();
         snap.attachToRecyclerView(recycler);
 
-        // Активность пользователя внутри оверлея (touch / drag / scroll / fling)
-        // считается взаимодействием — auto-hide перезапускается. Иначе если
-        // человек скроллит ленту выбирая режим, оверлей пропал бы через 3 секунды.
+        // User activity inside the overlay (touch / drag / scroll / fling)
+        // counts as interaction — auto-hide is restarted. Otherwise, if the
+        // user scrolls the list while picking a mode, the overlay would
+        // disappear after 3 seconds.
         recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
@@ -208,7 +211,7 @@ public class OverlayController {
                         || action == MotionEvent.ACTION_POINTER_DOWN) {
                     scheduleAutoHide();
                 }
-                return false; // не консьюмим — pill по-прежнему получает click
+                return false; // don't consume — pill still receives its click
             }
 
             @Override
@@ -218,16 +221,16 @@ public class OverlayController {
             public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
         });
 
-        // Dismiss-by-tap внутри окна: тап в «глухие» области (padding карточки,
-        // spacing между pills) закрывает оверлей. Тапы по pill потребляются ими
-        // и сюда не доходят.
+        // Dismiss-by-tap inside the window: a tap on the "dead" areas (card
+        // padding, spacing between pills) hides the overlay. Pill taps are
+        // consumed by the pill itself and never reach here.
         root.setClickable(true);
         root.setOnClickListener(v -> hide());
 
-        // Dismiss-by-tap снаружи окна: FLAG_WATCH_OUTSIDE_TOUCH вместе с
-        // FLAG_NOT_TOUCH_MODAL даёт ровно один ACTION_OUTSIDE event при тапе
-        // вне нашего окна. Сам тап при этом всё равно доходит до окна под
-        // нами (карта / медиа / etc) — это и есть то, что мы хотим.
+        // Dismiss-by-tap outside the window: FLAG_WATCH_OUTSIDE_TOUCH combined
+        // with FLAG_NOT_TOUCH_MODAL delivers exactly one ACTION_OUTSIDE event
+        // for taps outside our window. The original tap still reaches the
+        // window below us (map / media / etc) — which is exactly what we want.
         root.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
                 hide();
@@ -236,9 +239,9 @@ public class OverlayController {
             return false;
         });
 
-        // Фиксируем ширину карточки на 80% экрана СРАЗУ (до первого layout pass) —
-        // тогда RecyclerView внутри сразу получит правильный constraint и
-        // центрирующий scroll будет считаться корректно.
+        // Fix the card width to 80% of the screen IMMEDIATELY (before the
+        // first layout pass) — that way the RecyclerView inside gets the
+        // correct constraint up front and centering scroll is computed right.
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         int maxWidthPx = (int) (dm.widthPixels * MAX_WIDTH_FRACTION);
         overlayCard.getLayoutParams().width = maxWidthPx;

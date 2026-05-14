@@ -46,7 +46,7 @@
             android:layout_marginStart="14dp"
             android:layout_weight="1"
             android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            tools:text="Комфорт" />
+            tools:text="Comfort" />
 
         <ImageView
             android:id="@+id/drag_handle"

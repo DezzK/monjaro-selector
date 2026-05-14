@@ -25,14 +25,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import ru.monjaro.selector.util.Logs;
 
 /**
- * Единственная точка контакта с ECarX SDK для drive mode.
+ * Single point of contact with the ECarX SDK for drive mode.
  *
- * Все вызовы SDK выполняются на выделенном потоке "car-io".
- * Listener'ы получают уведомления на UI-потоке.
+ * All SDK calls happen on a dedicated "car-io" thread.
+ * Listeners are notified on the UI thread.
  *
- * Защита от эха: каждое наше setMode регистрирует ожидаемое значение в
- * programmaticInFlight с deadline; пока этот deadline не истёк, обратное
- * событие от ECU с тем же значением классифицируется как PROGRAMMATIC.
+ * Echo protection: every setMode call records the expected value in
+ * programmaticInFlight with a deadline; while the deadline has not expired,
+ * a matching value coming back from ECU is classified as PROGRAMMATIC.
  */
 public final class DriveModeRepository {
 
@@ -107,7 +107,7 @@ public final class DriveModeRepository {
             car = Car.create(appCtx);
             carFunction = car != null ? car.getICarFunction() : null;
             if (carFunction == null) {
-                Logs.w("ICarFunction == null, повторим позже");
+                Logs.w("ICarFunction == null, retrying later");
                 ioHandler.postDelayed(() -> initOnIo(appCtx), 1500);
                 return;
             }
@@ -115,9 +115,9 @@ public final class DriveModeRepository {
             try {
                 int current = carFunction.getFunctionValue(FUNC);
                 lastKnownMode = current;
-                Logs.d("Стартовый режим: " + current);
+                Logs.d("Initial mode: " + current);
             } catch (Throwable t) {
-                Logs.w("Не удалось прочитать стартовый режим: " + t.getMessage());
+                Logs.w("Failed to read initial mode: " + t.getMessage());
             }
             watcher = new ICarFunction.IFunctionValueWatcher() {
                 @Override
@@ -139,7 +139,7 @@ public final class DriveModeRepository {
                 public void onSupportedFunctionValueChanged(int functionId, int[] values) {
                     if (functionId == FUNC && values != null && values.length > 0) {
                         supportedModes = values.clone();
-                        Logs.d("Список поддерживаемых режимов обновлён, размер=" + values.length);
+                        Logs.d("Supported modes updated, size=" + values.length);
                         notifySupportedChanged();
                     }
                 }
@@ -166,10 +166,10 @@ public final class DriveModeRepository {
                 watcherRetries++;
                 long delay = WATCHER_RETRY_BASE_MS * watcherRetries;
                 Logs.w("registerFunctionValueWatcher failed: " + t.getMessage()
-                        + ", retry #" + watcherRetries + " через " + delay + "ms");
+                        + ", retry #" + watcherRetries + " in " + delay + "ms");
                 ioHandler.postDelayed(this::registerWatcherWithRetry, delay);
             } else {
-                Logs.w("Watcher так и не зарегистрирован после " + MAX_WATCHER_RETRIES + " попыток");
+                Logs.w("Watcher could not be registered after " + MAX_WATCHER_RETRIES + " attempts");
             }
         }
     }
@@ -180,7 +180,7 @@ public final class DriveModeRepository {
             int[] s = carFunction.getSupportedFunctionValue(FUNC);
             if (s != null && s.length > 0) {
                 supportedModes = s.clone();
-                Logs.d("Поддерживается режимов: " + s.length);
+                Logs.d("Supported modes: " + s.length);
                 notifySupportedChanged();
                 return;
             }
@@ -188,7 +188,7 @@ public final class DriveModeRepository {
             Logs.w("getSupportedFunctionValue failed: " + t.getMessage());
         }
         supportedModes = DriveModeCatalog.defaultOrder();
-        Logs.d("Fallback на дефолтный набор: " + supportedModes.length);
+        Logs.d("Fallback to default set: " + supportedModes.length);
         notifySupportedChanged();
     }
 
@@ -207,7 +207,7 @@ public final class DriveModeRepository {
                 ? DriveModeChangeOrigin.PROGRAMMATIC
                 : DriveModeChangeOrigin.EXTERNAL;
 
-        Logs.d("Mode " + previous + " → " + newValue + " (" + origin + ")");
+        Logs.d("Mode " + previous + " -> " + newValue + " (" + origin + ")");
         notifyListeners(previous, newValue, origin);
     }
 
@@ -256,7 +256,7 @@ public final class DriveModeRepository {
         return lastKnownMode;
     }
 
-    /** Синхронно читает актуальный режим из SDK. Не вызывать с UI потока. */
+    /** Synchronously reads the current mode from the SDK. Do not call from the UI thread. */
     @WorkerThread
     public int readCurrentMode() {
         ICarFunction cf = carFunction;
@@ -312,7 +312,7 @@ public final class DriveModeRepository {
         }
         try {
             boolean ok = cf.setFunctionValue(FUNC, code);
-            Logs.d("setFunctionValue(" + code + ") → " + ok);
+            Logs.d("setFunctionValue(" + code + ") -> " + ok);
         } catch (Throwable t) {
             Logs.w("setFunctionValue failed: " + t.getMessage());
         }

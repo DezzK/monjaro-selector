@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
             android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="Клик влево" />
+            tools:text="Previous mode" />
 
         <TextView
             android:id="@+id/copyable_value"

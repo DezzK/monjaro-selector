@@ -38,5 +38,5 @@
         android:textColor="?attr/colorOnSurface"
         android:textSize="@dimen/overlay_pill_label"
         android:textStyle="bold"
-        tools:text="Спорт" />
+        tools:text="Sport" />
 </LinearLayout>

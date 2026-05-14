@@ -84,7 +84,7 @@ public final class DriveModeSettings {
             }
             return result;
         } catch (JSONException e) {
-            Logs.w("Не удалось распарсить mode_order: " + e.getMessage());
+            Logs.w("Failed to parse mode_order: " + e.getMessage());
             return defaultOrder();
         }
     }
@@ -121,17 +121,17 @@ public final class DriveModeSettings {
     }
 
     /**
-     * Объединяет сохранённый порядок с каталогом всех режимов.
+     * Merges the saved order with the full catalog of modes.
      *
-     * Возвращает ВСЕ режимы из каталога (24 шт), чтобы пользователь мог
-     * включить любой — в том числе те, что машина «штатно не показывает»,
-     * но фактически их можно активировать (например SAND на Monjaro).
+     * Returns ALL modes from the catalog (24 of them) so that the user can
+     * enable any of them — including modes the car does not show in stock UI
+     * but which can actually be activated (e.g. SAND on Monjaro).
      *
-     * Порядок: сначала режимы из saved order (с сохранением их enabled),
-     * потом — режимы из каталога, которых не было в saved order.
+     * Order: saved entries first (preserving their enabled flag), then
+     * catalog entries that were missing from the saved order.
      *
-     * enabled-по-умолчанию для новых режимов: true, если {@code supported}
-     * содержит код; иначе false.
+     * Default enabled for newly added entries: true if {@code supported}
+     * contains the code, false otherwise.
      */
     @NonNull
     public List<ModeOrderEntry> mergeWithSupported(@NonNull int[] supported) {
@@ -166,8 +166,8 @@ public final class DriveModeSettings {
     }
 
     /**
-     * Дефолт при первом запуске (до получения списка supported из SDK).
-     * По умолчанию ничего не enabled — заполнится в {@link #mergeWithSupported}.
+     * Default at first run (before the supported list arrives from the SDK).
+     * Nothing is enabled by default — that is filled in by {@link #mergeWithSupported}.
      */
     @NonNull
     private List<ModeOrderEntry> defaultOrder() {

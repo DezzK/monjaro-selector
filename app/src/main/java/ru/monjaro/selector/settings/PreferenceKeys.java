@@ -10,9 +10,9 @@ public final class PreferenceKeys {
     public static final String KEY_AUTO_HIDE_SWITCH_MS = "auto_hide_switch_ms";
     public static final String KEY_DEBUG_LOG_INTENTS = "debug_log_intents";
 
-    /** Дольше, чем у switch: пользователь явно открыл оверлей, успеет посмотреть и выбрать тапом. */
+    /** Longer than switch: user explicitly opened the overlay and needs time to look at it and tap. */
     public static final int DEFAULT_AUTO_HIDE_PREVIEW_MS = 5000;
-    /** Короче: после переключения нужно лишь подтвердить визуально. */
+    /** Shorter: after a switch we only need to visually confirm the new mode. */
     public static final int DEFAULT_AUTO_HIDE_SWITCH_MS = 3000;
 
     public static final int AUTO_HIDE_MIN_MS = 1500;

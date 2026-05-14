@@ -41,9 +41,9 @@ public class DriveModeOverlayService extends Service
             "ru.monjaro.selector.service.action.SHOW_PREVIEW";
 
     /**
-     * Auto-hide после тапа по pill. Пользователь явно сделал выбор —
-     * долго держать оверлей смысла нет, достаточно короткой визуальной
-     * подтверждающей вспышки.
+     * Auto-hide after a pill tap. The user made an explicit choice — there is
+     * no point keeping the overlay around, a short visual confirmation flash
+     * is enough.
      */
     private static final int AUTO_HIDE_AFTER_TAP_MS = 500;
 
@@ -53,9 +53,9 @@ public class DriveModeOverlayService extends Service
     private int lastNightModeMask = Configuration.UI_MODE_NIGHT_UNDEFINED;
 
     /**
-     * Кешированные данные на UI-потоке. Перевычисляются при изменении
-     * {@code supportedModes} (через {@link DriveModeRepository.SupportedModesListener})
-     * или при изменении SharedPreferences (через
+     * Cached data on the UI thread. Recomputed when {@code supportedModes}
+     * changes (via {@link DriveModeRepository.SupportedModesListener}) or
+     * when SharedPreferences change (via
      * {@link SharedPreferences.OnSharedPreferenceChangeListener}).
      */
     private List<Integer> enabledOrderCache = Collections.emptyList();
@@ -103,7 +103,7 @@ public class DriveModeOverlayService extends Service
         super.onConfigurationChanged(newConfig);
         int newNight = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
         if (newNight != lastNightModeMask) {
-            Logs.d("UI mode changed (night=" + newNight + ") — пересоздаём оверлей");
+            Logs.d("UI mode changed (night=" + newNight + ") — recreating overlay");
             lastNightModeMask = newNight;
             if (overlay != null) overlay.dispose();
             overlay = createOverlayForCurrentTheme();
@@ -156,12 +156,12 @@ public class DriveModeOverlayService extends Service
             return;
         }
 
-        // Режим менять программно НЕ имеем права — единственный легитимный
-        // триггер для смены это knob или тап по pill. Тут мы только
-        // показываем оверлей, если кто-то снаружи (голос, MConfig) сменил
-        // mode на один из enabled. Если режим выключен в наших настройках —
-        // молча игнорируем, чтобы не дёргать машину при глушении зажигания,
-        // запуске приложения и т.п. фоновых событиях ECU.
+        // We have no right to change the mode programmatically here — the only
+        // legitimate triggers for a switch are knob and pill tap. Here we just
+        // show the overlay if someone external (voice, MConfig) switched to a
+        // mode that is in the enabled list. If the mode is disabled in our
+        // settings we silently ignore the event — we don't want to mess with
+        // the car on ignition off, app start and other background ECU events.
         List<Integer> enabledOrder = enabledOrderCache;
         if (enabledOrder.isEmpty()) return;
         if (!enabledCodesCache.contains(newValue)) return;
@@ -180,13 +180,13 @@ public class DriveModeOverlayService extends Service
         if (PreferenceKeys.KEY_MODE_ORDER.equals(key) || key == null) {
             recomputeEnabledCache(repository.getSupportedModes());
         }
-        // KEY_AUTO_HIDE_* читаются прямо в момент show — отдельной обработки не нужно.
+        // KEY_AUTO_HIDE_* are read directly at show time — no extra handling needed.
     }
 
     /**
-     * Перестраивает кеш enabledOrder/enabledCodes из текущих настроек и
-     * предоставленного списка supported. Также persistит merged-список,
-     * если supported изменился относительно сохранённого порядка.
+     * Rebuilds enabledOrder/enabledCodes cache from current settings and the
+     * provided supported list. Also persists the merged list if supported has
+     * changed relative to the saved order.
      */
     @MainThread
     private void recomputeEnabledCache(@NonNull int[] supportedModes) {
@@ -204,11 +204,11 @@ public class DriveModeOverlayService extends Service
     }
 
     /**
-     * Обработка команды knob-шага от {@link KnobReceiver}.
+     * Handles a knob-step command from {@link KnobReceiver}.
      *
-     * Для серий 2/3 кликов: фактически режим устанавливается на финальный
-     * сразу (без задержек), а оверлей анимированно проходит через все
-     * промежуточные положения.
+     * For 2/3-click series: the actual mode is set to the final value
+     * immediately (no delays), while the overlay animates through all
+     * intermediate positions.
      */
     private void handleKnobStep(String direction, int steps) {
         Logs.d("Knob step: direction=" + direction + ", steps=" + steps);
@@ -216,7 +216,7 @@ public class DriveModeOverlayService extends Service
         List<Integer> enabledOrder = enabledOrderCache;
         int switchMs = settings.getAutoHideSwitchMs();
         if (enabledOrder.size() < 2) {
-            Logs.d("Knob step: не из чего выбирать (enabled<2)");
+            Logs.d("Knob step: nothing to switch between (enabled<2)");
             if (!enabledOrder.isEmpty()) {
                 overlay.show(enabledOrder, repository.getLastKnownMode(), switchMs);
             }
@@ -247,7 +247,7 @@ public class DriveModeOverlayService extends Service
     private void handleShowPreview() {
         List<Integer> enabledOrder = enabledOrderCache;
         if (enabledOrder.isEmpty()) {
-            Logs.d("Preview: нет включённых режимов");
+            Logs.d("Preview: no enabled modes");
             return;
         }
         int previewMs = settings.getAutoHidePreviewMs();
@@ -257,7 +257,7 @@ public class DriveModeOverlayService extends Service
         });
     }
 
-    /** Обработка тапа по pill оверлея — переключиться на этот режим. */
+    /** Handles a tap on an overlay pill — switch to that mode. */
     @MainThread
     private void handleModeTap(int modeCode) {
         Logs.d("Pill tap: " + modeCode);
@@ -267,8 +267,8 @@ public class DriveModeOverlayService extends Service
     }
 
     /**
-     * Возвращает список промежуточных кодов (включая финальный) для серии
-     * из N шагов по {@code enabledOrder} (по кругу).
+     * Returns the list of intermediate codes (including the final one) for a
+     * series of N steps over {@code enabledOrder} (wrapping around).
      */
     static List<Integer> enumerateSteps(int start,
                                         RotationDirection direction,

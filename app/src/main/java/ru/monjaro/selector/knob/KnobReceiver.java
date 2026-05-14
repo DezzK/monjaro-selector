@@ -15,13 +15,13 @@ import ru.monjaro.selector.service.DriveModeOverlayService;
 import ru.monjaro.selector.util.Logs;
 
 /**
- * Принимает intent'ы от MConfig+ и передаёт команду переключения в
- * {@link DriveModeOverlayService}. Multiplier = количество шагов
- * (1, 2 или 3) согласно тому какой именно интент пришёл.
+ * Receives intents from MConfig+ and forwards a switch command to
+ * {@link DriveModeOverlayService}. Multiplier = number of steps
+ * (1, 2 or 3) depending on which exact intent arrived.
  *
- * Safety: на Android 14+ проверяем отправителя через {@link #getSentFromPackage()}
- * — пропускаем только из whitelist (MConfig+, MConfig, наш собственный пакет).
- * На API < 34 такой проверки нет — sender package неизвестен.
+ * Safety: on Android 14+ we verify the sender via {@link #getSentFromPackage()}
+ * — only packages in the whitelist are accepted (MConfig+, MConfig, our own).
+ * On API < 34 the sender package is unknown, so the check is skipped.
  */
 public class KnobReceiver extends BroadcastReceiver {
 
@@ -33,8 +33,8 @@ public class KnobReceiver extends BroadcastReceiver {
 
     private static final Set<String> TRUSTED_SENDERS = new HashSet<>(Arrays.asList(
             "plus.monjaro",        // MConfig+
-            "ru.monjaro.mconfig",  // оригинальный MConfig
-            "ru.monjaro.selector"  // мы сами (для тестов)
+            "ru.monjaro.mconfig",  // original MConfig
+            "ru.monjaro.selector"  // ourselves (for tests)
     ));
 
     @Override
@@ -81,8 +81,8 @@ public class KnobReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Проверка отправителя. На API 34+ используем {@link #getSentFromPackage()};
-     * на старых версиях Android API такой проверки не существует — пропускаем.
+     * Sender check. On API 34+ we use {@link #getSentFromPackage()};
+     * older Android versions do not expose such an API, so we skip the check.
      */
     private boolean isSenderTrusted() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -93,7 +93,7 @@ public class KnobReceiver extends BroadcastReceiver {
             return true;
         }
         if (TRUSTED_SENDERS.contains(sender)) return true;
-        Logs.w("Knob intent от недоверенного пакета: " + sender + " — игнорируем");
+        Logs.w("Knob intent from an untrusted package: " + sender + " — ignored");
         return false;
     }
 }

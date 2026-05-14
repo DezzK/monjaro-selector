@@ -131,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         reloadFromRepository();
-        // Стартуем сервис если permission уже есть (например, пользователь
-        // вернулся из системных Settings, дав разрешение). Иначе показываем
-        // диалог-инструкцию — но только один раз за сессию.
+        // Start the service if the permission is already granted (e.g. the
+        // user just came back from system Settings after granting it).
+        // Otherwise show the instruction dialog — but only once per session.
         if (hasOverlayPermission()) {
             MonjaroSelectorApp.get(this).startServiceIfPermitted();
         } else if (!permissionDialogShown) {
@@ -292,8 +292,8 @@ public class MainActivity extends AppCompatActivity {
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm == null) return;
         cm.setPrimaryClip(ClipData.newPlainText(label, value));
-        // На Android 13+ система сама показывает плашку «Copied to clipboard»,
-        // на старых — наш Toast.
+        // On Android 13+ the system shows its own "Copied to clipboard" chip,
+        // so we only emit a Toast on older versions.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             Toast.makeText(this, R.string.copied_toast, Toast.LENGTH_SHORT).show();
         }
