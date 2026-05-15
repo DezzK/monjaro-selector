@@ -13,6 +13,16 @@
     <string name="enabled_empty_hint">Нет активных режимов — добавьте хотя бы один из списка ниже.</string>
     <string name="remove_mode_cd">Убрать режим из активных</string>
 
+    <string name="probe_title">Опрос поддерживаемых режимов</string>
+    <string name="probe_subtitle">Автоматически определит, какие режимы поддерживаются автомобилем, по очереди их включая. Затем вернёт исходный режим.</string>
+    <string name="probe_button">Опросить автомобиль</string>
+    <string name="probe_confirm_title">Опросить режимы?</string>
+    <string name="probe_confirm_message">Приложение по очереди переключит все известные режимы вождения, чтобы понять, какие из них поддерживает автомобиль. Это займёт несколько секунд. Не используйте функцию на ходу.</string>
+    <string name="probe_confirm_run">Опросить</string>
+    <string name="probe_progress">Опрос %1$d / %2$d…</string>
+    <string name="probe_result">Найдено поддерживаемых режимов: %1$d из %2$d</string>
+    <string name="probe_failed">Опрос не удался: SDK недоступен</string>
+
     <string name="mconfig_integration_title">Интеграция с MConfig+</string>
     <string name="mconfig_integration_caption">Для блокировки штатного действия физического селектора используйте MConfig+: настройте knob так, чтобы он отправлял нам интенты.</string>
     <string name="mconfig_integration_show">Показать инструкцию</string>

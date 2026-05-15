@@ -221,6 +221,8 @@ public class MainActivity extends AppCompatActivity {
             Snackbar.make(binding.getRoot(), R.string.order_reset_toast, Snackbar.LENGTH_SHORT).show();
         });
 
+        binding.btnProbe.setOnClickListener(v -> showProbeConfirm());
+
         binding.switchCarousel.setChecked(settings.isCarouselMode());
         binding.switchCarousel.setOnCheckedChangeListener(
                 (btn, checked) -> settings.setCarouselMode(checked));
@@ -462,6 +464,69 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasOverlayPermission() {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
                 || Settings.canDrawOverlays(this);
+    }
+
+    // ------------------------------------------------------------------
+    // Probe — auto-detect which modes the car supports.
+    // ------------------------------------------------------------------
+
+    private void showProbeConfirm() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.probe_confirm_title)
+                .setMessage(R.string.probe_confirm_message)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.probe_confirm_run, (d, w) -> startProbe())
+                .show();
+    }
+
+    private void startProbe() {
+        java.util.List<dezz.monjaro.drive_modes.car.DriveModeDescriptor> all =
+                DriveModeCatalog.all();
+        int[] codes = new int[all.size()];
+        for (int i = 0; i < codes.length; i++) codes[i] = all.get(i).code;
+
+        TextView progressText = new TextView(this);
+        progressText.setText(getString(R.string.probe_progress, 0, codes.length));
+        progressText.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+        float d = getResources().getDisplayMetrics().density;
+        progressText.setPadding((int) (24 * d), (int) (24 * d), (int) (24 * d), (int) (24 * d));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.probe_title)
+                .setView(progressText)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+
+        DriveModeRepository.get().probeSupportedModes(codes, 250,
+                new DriveModeRepository.ProbeCallback() {
+                    @Override
+                    public void onProgress(int index, int total, int code) {
+                        progressText.setText(getString(R.string.probe_progress, index, total));
+                    }
+
+                    @Override
+                    public void onComplete(@NonNull int[] supported) {
+                        if (dialog.isShowing()) dialog.dismiss();
+                        Snackbar.make(binding.getRoot(),
+                                        getString(R.string.probe_result,
+                                                supported.length, codes.length),
+                                        Snackbar.LENGTH_LONG)
+                                .show();
+                        // The repository already published supported, listener
+                        // will refresh UI, but call directly to be safe.
+                        if (supported.length > 0) onSupportedModesChanged(supported);
+                    }
+
+                    @Override
+                    public void onFailed() {
+                        if (dialog.isShowing()) dialog.dismiss();
+                        Snackbar.make(binding.getRoot(),
+                                        R.string.probe_failed,
+                                        Snackbar.LENGTH_LONG)
+                                .show();
+                    }
+                });
     }
 
     private void showOverlayPermissionDialog() {
