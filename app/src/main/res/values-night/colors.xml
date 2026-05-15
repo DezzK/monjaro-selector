@@ -12,7 +12,7 @@
 
     <color name="overlay_card">#E61B1E27</color>
     <color name="overlay_stroke">#33FFFFFF</color>
-    <color name="pill_active_bg">#33FFFFFF</color>
+    <color name="pill_active_bg">#4DFFFFFF</color>
     <color name="pill_inactive_bg">#00FFFFFF</color>
 
     <!-- Dark-варианты accent-палитры — посветлее для контраста на тёмном фоне -->

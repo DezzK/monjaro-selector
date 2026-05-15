@@ -55,8 +55,8 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
 
     public static final int NO_CODE = Integer.MIN_VALUE;
 
-    private static final float SCALE_ACTIVE = 1.10f;
-    private static final float SCALE_INACTIVE = 0.78f;
+    private static final float SCALE_ACTIVE = 1.15f;
+    private static final float SCALE_INACTIVE = 0.82f;
     private static final long SCALE_ANIM_MS = 260L;
 
     private final List<Integer> codes = new ArrayList<>();
@@ -131,20 +131,22 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
         int onSurface = ContextCompat.getColor(ctx, R.color.m3_on_surface);
         int onSurfaceVariant = ContextCompat.getColor(ctx, R.color.m3_on_surface_variant);
 
+        // Tint policy is the same for active and inactive: pre-colored OEM
+        // icons stay as designed, plain silhouettes get the accent. Inactive
+        // tiles keep their colors so they are easy to spot and tap; the
+        // active tile is highlighted by scale, background, and label color.
+        h.icon.setImageTintList(desc.iconIsColored ? null : ColorStateList.valueOf(accent));
+        h.icon.setAlpha(1f);
+
         if (active) {
             h.iconHolder.setBackgroundResource(R.drawable.bg_pill_active);
-            // Keep OEM colors on active; only tint plain silhouettes with accent.
-            h.icon.setImageTintList(desc.iconIsColored ? null : ColorStateList.valueOf(accent));
             h.label.setTextColor(onSurface);
             h.label.setAlpha(1f);
             animateScale(h.itemView, SCALE_ACTIVE);
         } else {
             h.iconHolder.setBackgroundResource(R.drawable.bg_pill_inactive);
-            // Inactive: desaturate every icon, OEM-colored or not, so the active
-            // item stands out.
-            h.icon.setImageTintList(ColorStateList.valueOf(onSurfaceVariant));
             h.label.setTextColor(onSurfaceVariant);
-            h.label.setAlpha(0.55f);
+            h.label.setAlpha(0.7f);
             animateScale(h.itemView, SCALE_INACTIVE);
         }
     }

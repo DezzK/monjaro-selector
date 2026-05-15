@@ -14,7 +14,7 @@
          заметным тёмным фоном; неактивный — полностью прозрачный. -->
     <color name="overlay_card">#F2FAFAFA</color>
     <color name="overlay_stroke">#33000000</color>
-    <color name="pill_active_bg">#1F000000</color>
+    <color name="pill_active_bg">#33000000</color>
     <color name="pill_inactive_bg">#00000000</color>
 
     <!-- Drive-mode accents — общие для обеих тем, насыщенные для контраста на белом. -->
