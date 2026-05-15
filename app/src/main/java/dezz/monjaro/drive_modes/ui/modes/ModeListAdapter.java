@@ -20,6 +20,7 @@ package dezz.monjaro.drive_modes.ui.modes;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -40,6 +41,7 @@ import java.util.List;
 import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
 import dezz.monjaro.drive_modes.car.DriveModeDescriptor;
+import dezz.monjaro.drive_modes.ui.icon.ShadowDrawable;
 
 /**
  * Adapter for the "active modes" list. Only enabled modes live here — the
@@ -104,8 +106,15 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
         DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(code);
         Context ctx = h.itemView.getContext();
 
-        h.icon.setImageResource(desc.iconRes);
-        h.icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, desc.accentRes)));
+        Drawable raw = ContextCompat.getDrawable(ctx, desc.iconRes);
+        h.icon.setImageDrawable(raw != null ? new ShadowDrawable(raw) : null);
+        // OEM-colored icons carry their own brand colors; tinting them would
+        // wash that out, so we only tint plain white silhouettes.
+        if (desc.iconIsColored) {
+            h.icon.setImageTintList(null);
+        } else {
+            h.icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, desc.accentRes)));
+        }
         h.label.setText(desc.labelRes);
     }
 

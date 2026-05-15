@@ -19,6 +19,7 @@ package dezz.monjaro.drive_modes.ui.overlay;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,7 @@ import java.util.List;
 import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
 import dezz.monjaro.drive_modes.car.DriveModeDescriptor;
+import dezz.monjaro.drive_modes.ui.icon.ShadowDrawable;
 
 /**
  * Highlight is driven by the active CODE: in carousel mode every copy of the
@@ -120,7 +122,8 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
         DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(code);
         Context ctx = h.itemView.getContext();
 
-        h.icon.setImageResource(desc.iconRes);
+        Drawable raw = ContextCompat.getDrawable(ctx, desc.iconRes);
+        h.icon.setImageDrawable(raw != null ? new ShadowDrawable(raw) : null);
         h.label.setText(desc.labelRes);
 
         boolean active = (code == activeCode);
@@ -130,12 +133,15 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
 
         if (active) {
             h.iconHolder.setBackgroundResource(R.drawable.bg_pill_active);
-            h.icon.setImageTintList(ColorStateList.valueOf(accent));
+            // Keep OEM colors on active; only tint plain silhouettes with accent.
+            h.icon.setImageTintList(desc.iconIsColored ? null : ColorStateList.valueOf(accent));
             h.label.setTextColor(onSurface);
             h.label.setAlpha(1f);
             animateScale(h.itemView, SCALE_ACTIVE);
         } else {
             h.iconHolder.setBackgroundResource(R.drawable.bg_pill_inactive);
+            // Inactive: desaturate every icon, OEM-colored or not, so the active
+            // item stands out.
             h.icon.setImageTintList(ColorStateList.valueOf(onSurfaceVariant));
             h.label.setTextColor(onSurfaceVariant);
             h.label.setAlpha(0.55f);

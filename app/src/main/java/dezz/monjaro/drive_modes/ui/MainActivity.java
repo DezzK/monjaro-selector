@@ -21,6 +21,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -58,6 +59,7 @@ import dezz.monjaro.drive_modes.knob.KnobIntents;
 import dezz.monjaro.drive_modes.service.DriveModeOverlayService;
 import dezz.monjaro.drive_modes.settings.DriveModeSettings;
 import dezz.monjaro.drive_modes.settings.ModeOrderEntry;
+import dezz.monjaro.drive_modes.ui.icon.ShadowDrawable;
 import dezz.monjaro.drive_modes.ui.modes.ModeDragCallback;
 import dezz.monjaro.drive_modes.ui.modes.ModeListAdapter;
 
@@ -264,9 +266,14 @@ public class MainActivity extends AppCompatActivity {
             DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(code);
             com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
             chip.setText(getString(desc.labelRes));
-            chip.setChipIconResource(desc.iconRes);
-            chip.setChipIconTint(android.content.res.ColorStateList.valueOf(
-                    ContextCompat.getColor(this, desc.accentRes)));
+            Drawable raw = ContextCompat.getDrawable(this, desc.iconRes);
+            chip.setChipIcon(raw != null ? new ShadowDrawable(raw) : null);
+            // Match the policy used in the row/overlay: keep OEM colors on
+            // pre-colored icons, tint only plain white silhouettes.
+            chip.setChipIconTint(desc.iconIsColored
+                    ? null
+                    : android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, desc.accentRes)));
+            chip.setChipIconSize(getResources().getDimension(R.dimen.chip_icon_size));
             chip.setChipIconVisible(true);
             chip.setCheckable(false);
             chip.setOnClickListener(v -> enableMode(code));

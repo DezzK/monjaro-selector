@@ -28,15 +28,26 @@ public final class DriveModeDescriptor {
     @StringRes public final int labelRes;
     @DrawableRes public final int iconRes;
     @ColorRes public final int accentRes;
+    /** True for OEM icons that carry their own brand colors and must not be tinted. */
+    public final boolean iconIsColored;
 
     public DriveModeDescriptor(int code, String key,
                                @StringRes int labelRes,
                                @DrawableRes int iconRes,
-                               @ColorRes int accentRes) {
+                               @ColorRes int accentRes,
+                               boolean iconIsColored) {
         this.code = code;
         this.key = key;
         this.labelRes = labelRes;
         this.iconRes = iconRes;
         this.accentRes = accentRes;
+        this.iconIsColored = iconIsColored;
+    }
+
+    public DriveModeDescriptor(int code, String key,
+                               @StringRes int labelRes,
+                               @DrawableRes int iconRes,
+                               @ColorRes int accentRes) {
+        this(code, key, labelRes, iconRes, accentRes, false);
     }
 }

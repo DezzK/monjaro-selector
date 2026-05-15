@@ -5,11 +5,16 @@
     <dimen name="card_padding">16dp</dimen>
     <dimen name="row_height">72dp</dimen>
     <dimen name="row_icon">36dp</dimen>
+    <!-- ImageView size for icons rendered through ShadowDrawable. The shadow
+         reserves the outer ~20%, so the actual glyph ends up close to the
+         bare-icon size we used before. -->
+    <dimen name="row_icon_image">28dp</dimen>
+    <dimen name="chip_icon_size">22dp</dimen>
     <dimen name="overlay_corner">48dp</dimen>
     <dimen name="overlay_padding_horizontal">56dp</dimen>
     <dimen name="overlay_padding_vertical">40dp</dimen>
     <dimen name="overlay_pill_icon">132dp</dimen>
-    <dimen name="overlay_pill_icon_image">78dp</dimen>
+    <dimen name="overlay_pill_icon_image">98dp</dimen>
     <dimen name="overlay_pill_label">24sp</dimen>
     <dimen name="overlay_pill_min_width">180dp</dimen>
     <dimen name="overlay_item_spacing">12dp</dimen>

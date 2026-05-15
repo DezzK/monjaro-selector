@@ -37,25 +37,25 @@ public final class DriveModeCatalog {
     static {
         List<DriveModeDescriptor> list = new ArrayList<>();
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_COMFORT,
-                "comfort", R.string.mode_comfort, R.drawable.ic_mode_comfort, R.color.accent_comfort));
+                "comfort", R.string.mode_comfort, R.drawable.ic_mode_comfort, R.color.accent_comfort, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_ECO,
-                "eco", R.string.mode_eco, R.drawable.ic_mode_eco, R.color.accent_eco));
+                "eco", R.string.mode_eco, R.drawable.ic_mode_eco, R.color.accent_eco, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_ECO_PLUS,
-                "eco_plus", R.string.mode_eco_plus, R.drawable.ic_mode_eco, R.color.accent_eco));
+                "eco_plus", R.string.mode_eco_plus, R.drawable.ic_mode_eco, R.color.accent_eco, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_DYNAMIC,
-                "dynamic", R.string.mode_dynamic, R.drawable.ic_mode_sport, R.color.accent_sport));
+                "dynamic", R.string.mode_dynamic, R.drawable.ic_mode_sport, R.color.accent_sport, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SPORT_PLUS,
-                "sport_plus", R.string.mode_sport_plus, R.drawable.ic_mode_sport, R.color.accent_sport));
+                "sport_plus", R.string.mode_sport_plus, R.drawable.ic_mode_sport, R.color.accent_sport, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_NORMAL,
                 "normal", R.string.mode_normal, R.drawable.ic_mode_generic, R.color.accent_neutral));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_SNOW,
-                "snow", R.string.mode_snow, R.drawable.ic_mode_snow, R.color.accent_snow));
+                "snow", R.string.mode_snow, R.drawable.ic_mode_snow, R.color.accent_snow, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_OFFROAD,
-                "offroad", R.string.mode_offroad, R.drawable.ic_mode_offroad, R.color.accent_offroad));
+                "offroad", R.string.mode_offroad, R.drawable.ic_mode_offroad, R.color.accent_offroad, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_MUD,
                 "mud", R.string.mode_mud, R.drawable.ic_mode_mud, R.color.accent_mud));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_SAND,
-                "sand", R.string.mode_sand, R.drawable.ic_mode_sand, R.color.accent_sand));
+                "sand", R.string.mode_sand, R.drawable.ic_mode_sand, R.color.accent_sand, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_ROCK,
                 "rock", R.string.mode_rock, R.drawable.ic_mode_rock, R.color.accent_rock));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_POWER,
@@ -71,13 +71,13 @@ public final class DriveModeCatalog {
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_CUSTOM,
                 "custom", R.string.mode_custom, R.drawable.ic_mode_custom, R.color.accent_custom));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_ADAPTIVE,
-                "adaptive", R.string.mode_adaptive, R.drawable.ic_mode_adaptive, R.color.accent_neutral));
+                "adaptive", R.string.mode_adaptive, R.drawable.ic_mode_adaptive, R.color.accent_neutral, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_HDC,
                 "hdc", R.string.mode_hdc, R.drawable.ic_mode_hdc, R.color.accent_offroad));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_PHEV,
                 "phev", R.string.mode_phev, R.drawable.ic_mode_phev, R.color.accent_pure));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_ECO_HEV_PHEV,
-                "eco_hev_phev", R.string.mode_eco_hev_phev, R.drawable.ic_mode_eco, R.color.accent_eco));
+                "eco_hev_phev", R.string.mode_eco_hev_phev, R.drawable.ic_mode_eco, R.color.accent_eco, true));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_SAVE,
                 "save", R.string.mode_save, R.drawable.ic_mode_save, R.color.accent_neutral));
         list.add(new DriveModeDescriptor(IDriveMode.DRIVE_MODE_SELECTION_XC,
