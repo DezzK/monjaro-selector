@@ -31,7 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.checkbox.MaterialCheckBox;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,37 +40,41 @@ import java.util.List;
 import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
 import dezz.monjaro.drive_modes.car.DriveModeDescriptor;
-import dezz.monjaro.drive_modes.settings.ModeOrderEntry;
 
+/**
+ * Adapter for the "active modes" list. Only enabled modes live here — the
+ * user adds a mode by tapping a chip in the "available" section and removes
+ * it via the trash button on the row.
+ */
 public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
 
     public interface Callback {
-        void onEnabledChanged(int code, boolean enabled);
-        void onOrderChanged(List<ModeOrderEntry> newOrder);
+        void onRemove(int code);
+        void onOrderChanged(List<Integer> newOrder);
         void onStartDrag(RecyclerView.ViewHolder vh);
     }
 
-    private final List<ModeOrderEntry> items = new ArrayList<>();
+    private final List<Integer> codes = new ArrayList<>();
     private final Callback callback;
 
     public ModeListAdapter(@NonNull Callback callback) {
         this.callback = callback;
     }
 
-    public void submit(@NonNull List<ModeOrderEntry> entries) {
-        items.clear();
-        items.addAll(entries);
+    public void submit(@NonNull List<Integer> enabled) {
+        codes.clear();
+        codes.addAll(enabled);
         notifyDataSetChanged();
     }
 
     public void onItemMove(int from, int to) {
-        if (from < 0 || to < 0 || from >= items.size() || to >= items.size()) return;
-        Collections.swap(items, from, to);
+        if (from < 0 || to < 0 || from >= codes.size() || to >= codes.size()) return;
+        Collections.swap(codes, from, to);
         notifyItemMoved(from, to);
     }
 
     public void commitOrder() {
-        callback.onOrderChanged(new ArrayList<>(items));
+        callback.onOrderChanged(new ArrayList<>(codes));
     }
 
     @NonNull
@@ -80,17 +84,10 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_drive_mode_row, parent, false);
         final Vh holder = new Vh(v);
-        // Listeners bound once per ViewHolder. They look up the current item
-        // via the bound adapter position, so they remain valid after reorder.
-        // Using onClick (not onCheckedChange) sidesteps the spurious-callback
-        // problem when setChecked() is invoked from onBindViewHolder.
-        holder.checkbox.setOnClickListener(v2 -> {
+        holder.removeButton.setOnClickListener(v2 -> {
             int pos = holder.getBindingAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
-            ModeOrderEntry entry = items.get(pos);
-            boolean isChecked = holder.checkbox.isChecked();
-            entry.enabled = isChecked;
-            callback.onEnabledChanged(entry.code, isChecked);
+            callback.onRemove(codes.get(pos));
         });
         holder.dragHandle.setOnTouchListener((view, event) -> {
             if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
@@ -103,33 +100,32 @@ public class ModeListAdapter extends RecyclerView.Adapter<ModeListAdapter.Vh> {
 
     @Override
     public void onBindViewHolder(@NonNull Vh h, int position) {
-        ModeOrderEntry entry = items.get(position);
-        DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(entry.code);
+        int code = codes.get(position);
+        DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(code);
         Context ctx = h.itemView.getContext();
 
         h.icon.setImageResource(desc.iconRes);
         h.icon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(ctx, desc.accentRes)));
         h.label.setText(desc.labelRes);
-        h.checkbox.setChecked(entry.enabled);
     }
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return codes.size();
     }
 
     static class Vh extends RecyclerView.ViewHolder {
-        final MaterialCheckBox checkbox;
         final ImageView icon;
         final TextView label;
         final ImageView dragHandle;
+        final MaterialButton removeButton;
 
         Vh(View v) {
             super(v);
-            checkbox = v.findViewById(R.id.checkbox_enabled);
             icon = v.findViewById(R.id.icon_mode);
             label = v.findViewById(R.id.label_mode);
             dragHandle = v.findViewById(R.id.drag_handle);
+            removeButton = v.findViewById(R.id.btn_remove);
         }
     }
 }

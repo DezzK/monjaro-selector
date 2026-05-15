@@ -3,10 +3,15 @@
     <string name="app_name">Monjaro Drive Mode Selector</string>
 
     <string name="title_settings">Drive mode selector</string>
-    <string name="subtitle_settings">Drag to reorder. Uncheck a mode to skip it when scrolling.</string>
+    <string name="subtitle_settings">Active modes are on top — drag to reorder. Available ones below — tap to add.</string>
     <string name="reset_order">Reset order</string>
     <string name="order_reset_toast">Order has been reset</string>
     <string name="show_overlay_now">Show overlay now</string>
+    <string name="section_enabled_modes">Active modes</string>
+    <string name="section_available_modes">Available modes</string>
+    <string name="available_empty_hint">All catalog modes are already added.</string>
+    <string name="enabled_empty_hint">No active modes — add at least one from the list below.</string>
+    <string name="remove_mode_cd">Remove from active</string>
 
     <string name="mconfig_integration_title">MConfig+ integration</string>
     <string name="mconfig_integration_caption">To block the stock action of the physical selector, use MConfig+: configure the knob to send intents to us.</string>

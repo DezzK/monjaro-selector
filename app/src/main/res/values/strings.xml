@@ -3,10 +3,15 @@
     <string name="app_name">Monjaro Drive Mode Selector</string>
 
     <string name="title_settings">Селектор режимов</string>
-    <string name="subtitle_settings">Перетащите для изменения порядка. Снимите галочку, чтобы пропустить режим при прокрутке.</string>
+    <string name="subtitle_settings">Активные режимы — сверху, можно перетаскивать для изменения порядка. Доступные — снизу, нажмите чтобы добавить.</string>
     <string name="reset_order">Сбросить порядок</string>
     <string name="order_reset_toast">Порядок сброшен</string>
     <string name="show_overlay_now">Показать оверлей сейчас</string>
+    <string name="section_enabled_modes">Активные режимы</string>
+    <string name="section_available_modes">Доступные режимы</string>
+    <string name="available_empty_hint">Все режимы из каталога уже добавлены.</string>
+    <string name="enabled_empty_hint">Нет активных режимов — добавьте хотя бы один из списка ниже.</string>
+    <string name="remove_mode_cd">Убрать режим из активных</string>
 
     <string name="mconfig_integration_title">Интеграция с MConfig+</string>
     <string name="mconfig_integration_caption">Для блокировки штатного действия физического селектора используйте MConfig+: настройте knob так, чтобы он отправлял нам интенты.</string>

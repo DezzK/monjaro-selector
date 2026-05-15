@@ -51,6 +51,7 @@ import dezz.monjaro.drive_modes.BuildConfig;
 import dezz.monjaro.drive_modes.MonjaroSelectorApp;
 import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
+import dezz.monjaro.drive_modes.car.DriveModeDescriptor;
 import dezz.monjaro.drive_modes.car.DriveModeRepository;
 import dezz.monjaro.drive_modes.databinding.ActivityMainBinding;
 import dezz.monjaro.drive_modes.knob.KnobIntents;
@@ -181,13 +182,13 @@ public class MainActivity extends AppCompatActivity {
     private void setupList() {
         adapter = new ModeListAdapter(new ModeListAdapter.Callback() {
             @Override
-            public void onEnabledChanged(int code, boolean enabled) {
-                settings.setEnabled(code, enabled);
+            public void onRemove(int code) {
+                disableMode(code);
             }
 
             @Override
-            public void onOrderChanged(List<ModeOrderEntry> newOrder) {
-                settings.saveOrder(newOrder);
+            public void onOrderChanged(List<Integer> newOrder) {
+                applyEnabledOrder(newOrder);
             }
 
             @Override
@@ -230,14 +231,128 @@ public class MainActivity extends AppCompatActivity {
         if (supported == null || supported.length == 0) {
             supported = DriveModeCatalog.defaultOrder();
         }
-        List<ModeOrderEntry> merged = settings.mergeWithSupported(supported);
-        adapter.submit(merged);
+        rebindLists(settings.mergeWithSupported(supported));
     }
 
     private void onSupportedModesChanged(@NonNull int[] supportedModes) {
         if (adapter == null) return;
-        List<ModeOrderEntry> merged = settings.mergeWithSupported(supportedModes);
-        adapter.submit(merged);
+        rebindLists(settings.mergeWithSupported(supportedModes));
+    }
+
+    /**
+     * Splits the merged order into two visual sections: enabled (RecyclerView,
+     * draggable) and disabled (chips, tap to add).
+     */
+    private void rebindLists(@NonNull List<ModeOrderEntry> merged) {
+        List<Integer> enabled = new java.util.ArrayList<>();
+        List<Integer> disabled = new java.util.ArrayList<>();
+        for (ModeOrderEntry e : merged) {
+            if (e.enabled) enabled.add(e.code);
+            else disabled.add(e.code);
+        }
+        adapter.submit(enabled);
+        binding.enabledEmptyHint.setVisibility(enabled.isEmpty() ? View.VISIBLE : View.GONE);
+        rebuildAvailableChips(disabled);
+    }
+
+    private void rebuildAvailableChips(@NonNull List<Integer> available) {
+        binding.chipsAvailable.removeAllViews();
+        binding.availableEmptyHint.setVisibility(available.isEmpty() ? View.VISIBLE : View.GONE);
+        for (int code : available) {
+            DriveModeDescriptor desc = DriveModeCatalog.byCodeOrGeneric(code);
+            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
+            chip.setText(getString(desc.labelRes));
+            chip.setChipIconResource(desc.iconRes);
+            chip.setChipIconTint(android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(this, desc.accentRes)));
+            chip.setChipIconVisible(true);
+            chip.setCheckable(false);
+            chip.setOnClickListener(v -> enableMode(code));
+            binding.chipsAvailable.addView(chip);
+        }
+    }
+
+    /**
+     * Move {@code code} from "available" to the END of "enabled" preserving
+     * the order of every other entry.
+     */
+    private void enableMode(int code) {
+        List<ModeOrderEntry> full = settings.getOrder();
+        List<ModeOrderEntry> enabled = new java.util.ArrayList<>();
+        List<ModeOrderEntry> disabled = new java.util.ArrayList<>();
+        ModeOrderEntry target = null;
+        for (ModeOrderEntry e : full) {
+            if (e.code == code) {
+                target = e;
+            } else if (e.enabled) {
+                enabled.add(e);
+            } else {
+                disabled.add(e);
+            }
+        }
+        if (target == null) target = new ModeOrderEntry(code, true);
+        target.enabled = true;
+        enabled.add(target);
+        List<ModeOrderEntry> result = new java.util.ArrayList<>(enabled);
+        result.addAll(disabled);
+        settings.saveOrder(result);
+        reloadFromRepository();
+    }
+
+    /**
+     * Move {@code code} from "enabled" to the START of "disabled" preserving
+     * the order of every other entry. Done as one save so the JSON always
+     * keeps the invariant: enabled first, disabled after.
+     */
+    private void disableMode(int code) {
+        List<ModeOrderEntry> full = settings.getOrder();
+        List<ModeOrderEntry> enabled = new java.util.ArrayList<>();
+        List<ModeOrderEntry> disabled = new java.util.ArrayList<>();
+        ModeOrderEntry target = null;
+        for (ModeOrderEntry e : full) {
+            if (e.code == code) {
+                target = e;
+            } else if (e.enabled) {
+                enabled.add(e);
+            } else {
+                disabled.add(e);
+            }
+        }
+        if (target != null) {
+            target.enabled = false;
+            disabled.add(0, target);
+        }
+        List<ModeOrderEntry> result = new java.util.ArrayList<>(enabled);
+        result.addAll(disabled);
+        settings.saveOrder(result);
+        reloadFromRepository();
+    }
+
+    /**
+     * Drag-and-drop committed: persist the new enabled order, keeping the
+     * disabled tail intact.
+     */
+    private void applyEnabledOrder(@NonNull List<Integer> newEnabledOrder) {
+        List<ModeOrderEntry> full = settings.getOrder();
+        java.util.Map<Integer, ModeOrderEntry> byCode = new java.util.HashMap<>();
+        for (ModeOrderEntry e : full) byCode.put(e.code, e);
+        List<ModeOrderEntry> result = new java.util.ArrayList<>();
+        for (int code : newEnabledOrder) {
+            ModeOrderEntry e = byCode.remove(code);
+            if (e != null) {
+                e.enabled = true;
+                result.add(e);
+            }
+        }
+        // Append remaining (= disabled) entries preserving their relative order.
+        for (ModeOrderEntry e : full) {
+            if (byCode.containsKey(e.code)) {
+                e.enabled = false;
+                result.add(e);
+                byCode.remove(e.code);
+            }
+        }
+        settings.saveOrder(result);
     }
 
     private void showIntegrationDialog() {
