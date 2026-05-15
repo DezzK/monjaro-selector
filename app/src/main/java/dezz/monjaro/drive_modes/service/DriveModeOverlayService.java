@@ -256,6 +256,14 @@ public class DriveModeOverlayService extends Service
             return;
         }
         repository.readCurrentModeAsync(actual -> {
+            if (actual < 0) {
+                // Repository hasn't read a real value from the SDK yet (e.g.
+                // very first knob step right after boot, while initOnIo is
+                // still racing). Skipping is much better than picking a
+                // random fallback and yanking ECU to the first enabled mode.
+                Logs.w("Knob step ignored — current mode not yet known");
+                return;
+            }
             RotationDirection dir = KnobReceiver.DIRECTION_PREV.equals(direction)
                     ? RotationDirection.BACKWARD
                     : RotationDirection.FORWARD;

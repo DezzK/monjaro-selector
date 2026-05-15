@@ -132,13 +132,7 @@ public final class DriveModeRepository {
                 return;
             }
             loadSupported();
-            try {
-                int current = carFunction.getFunctionValue(FUNC);
-                lastKnownMode = current;
-                Logs.d("Initial mode: " + current);
-            } catch (Throwable t) {
-                Logs.w("Failed to read initial mode: " + t.getMessage());
-            }
+            attemptInitialRead();
             watcher = new ICarFunction.IFunctionValueWatcher() {
                 @Override
                 public void onFunctionValueChanged(int functionId, int zone, int value) {
@@ -168,9 +162,41 @@ public final class DriveModeRepository {
             initialized = true;
             initRetries = 0;
             Logs.d("DriveModeRepository init OK");
+
+            // The very first getFunctionValue() right after boot sometimes
+            // returns a stale or sentinel value because the SDK isn't fully
+            // wired yet. If we ended up without a known mode, retry shortly
+            // — otherwise the first knob step would see actual=-1 and fall
+            // back to the first enabled mode, which looks like "the overlay
+            // jumps to a random mode" to the user.
+            if (lastKnownMode < 0) {
+                ioHandler.postDelayed(this::attemptInitialRead, 1000);
+            }
         } catch (Throwable t) {
             Logs.e("DriveModeRepository init failed", t);
             scheduleInitRetry(appCtx, t.getMessage());
+        }
+    }
+
+    /**
+     * Read the current mode from the SDK and cache it in {@link #lastKnownMode}.
+     * No-op if the SDK isn't bound yet or the read fails / returns a sentinel.
+     * Safe to call multiple times — only successful reads update the cache.
+     */
+    @WorkerThread
+    private void attemptInitialRead() {
+        ICarFunction cf = carFunction;
+        if (cf == null) return;
+        try {
+            int current = cf.getFunctionValue(FUNC);
+            if (current >= 0) {
+                lastKnownMode = current;
+                Logs.d("Initial mode read: " + current);
+            } else {
+                Logs.w("Initial mode read returned " + current + " — will rely on watcher events");
+            }
+        } catch (Throwable t) {
+            Logs.w("Initial mode read failed: " + t.getMessage());
         }
     }
 

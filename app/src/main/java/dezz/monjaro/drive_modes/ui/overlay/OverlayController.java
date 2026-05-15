@@ -95,6 +95,14 @@ public class OverlayController {
      */
     private static final int CAROUSEL_REPEATS = 11;
 
+    /**
+     * Below this many real modes the carousel makes no visual sense: the
+     * viewport would always show the active pill plus half-cut duplicates on
+     * either side. Fall back to the static layout instead, even if the
+     * setting is on.
+     */
+    private static final int CAROUSEL_MIN_COUNT = 3;
+
     private final Context context;
     private final WindowManager windowManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -178,6 +186,16 @@ public class OverlayController {
         currentRealCodes = null;
     }
 
+    /**
+     * Carousel is only used when the user enabled it AND there are enough
+     * modes to make a rotation meaningful. With 1-2 modes the infinite strip
+     * would just show duplicates next to the active pill, so we fall back to
+     * the static layout.
+     */
+    private boolean shouldUseCarousel(int realCount) {
+        return carouselMode && realCount >= CAROUSEL_MIN_COUNT;
+    }
+
     @MainThread
     public void show(@NonNull List<Integer> orderedCodes, int activeCode, int autoHideMs) {
         if (orderedCodes.isEmpty()) {
@@ -190,7 +208,7 @@ public class OverlayController {
         currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
 
-        if (carouselMode) {
+        if (shouldUseCarousel(orderedCodes.size())) {
             showCarousel(orderedCodes, activeCode);
         } else {
             showStatic(orderedCodes, activeCode);
@@ -221,7 +239,8 @@ public class OverlayController {
         currentAutoHideMs = autoHideMs;
         cancelQueuedSteps();
 
-        if (carouselMode) {
+        final boolean useCarousel = shouldUseCarousel(orderedCodes.size());
+        if (useCarousel) {
             showCarousel(orderedCodes, startCode);
         } else {
             showStatic(orderedCodes, startCode);
@@ -232,7 +251,7 @@ public class OverlayController {
             final int code = stepsToHighlight.get(i);
             final List<Integer> codesRef = orderedCodes;
             Runnable step = () -> {
-                if (carouselMode) {
+                if (useCarousel) {
                     showCarousel(codesRef, code);
                 } else {
                     showStatic(codesRef, code);
