@@ -13,14 +13,23 @@
     <dimen name="overlay_corner">48dp</dimen>
     <dimen name="overlay_padding_horizontal">56dp</dimen>
     <dimen name="overlay_padding_vertical">40dp</dimen>
-    <!-- Natural sizes are sized for the active state (scale = 1.0). Inactive
-         pills downscale from here, so VectorDrawables are always rasterized
-         at the largest size they'll ever appear and only sampled down — the
-         GPU bitmap-scales every View transform, so we never let it upscale a
-         cached raster. -->
+    <!-- Each pill has two rest-state sizes: active (large) and inactive
+         (small). At rest the views actually take their natural state size, so
+         VectorDrawables rasterize directly at the displayed pixel count and
+         look crisp in both states. Animation between the two uses scaleX/Y
+         on the larger (active) layout — motion masks the bitmap interpolation,
+         and the snap to the target rest layout happens when the animation
+         lands. Inactive values are exactly active * 0.71. -->
     <dimen name="overlay_pill_icon">152dp</dimen>
     <dimen name="overlay_pill_icon_image">113dp</dimen>
     <dimen name="overlay_pill_label">28sp</dimen>
+    <dimen name="overlay_pill_icon_small">108dp</dimen>
+    <dimen name="overlay_pill_icon_image_small">80dp</dimen>
+    <dimen name="overlay_pill_label_small">20sp</dimen>
+    <!-- Fixed pill height keeps the carousel row even regardless of which
+         pills are active; content inside is centered. Sized for the active
+         state plus padding. -->
+    <dimen name="overlay_pill_height">220dp</dimen>
     <dimen name="overlay_pill_min_width">180dp</dimen>
     <dimen name="overlay_item_spacing">12dp</dimen>
 </resources>
