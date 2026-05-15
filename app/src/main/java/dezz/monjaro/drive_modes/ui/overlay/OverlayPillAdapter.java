@@ -55,8 +55,11 @@ public class OverlayPillAdapter extends RecyclerView.Adapter<OverlayPillAdapter.
 
     public static final int NO_CODE = Integer.MIN_VALUE;
 
-    private static final float SCALE_ACTIVE = 1.15f;
-    private static final float SCALE_INACTIVE = 0.82f;
+    // Natural pill size is sized for the active state so the cached vector
+    // raster is never upscaled by View.scaleX (which always bitmap-scales).
+    // Inactive pills only ever downscale, which the GPU samples cleanly.
+    private static final float SCALE_ACTIVE = 1.0f;
+    private static final float SCALE_INACTIVE = 0.71f;
     private static final long SCALE_ANIM_MS = 260L;
 
     private final List<Integer> codes = new ArrayList<>();
