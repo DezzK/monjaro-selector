@@ -14,12 +14,10 @@
     <string name="remove_mode_cd">Remove from active</string>
 
     <string name="probe_title">Probe supported modes</string>
-    <string name="probe_subtitle">Automatically determines which modes the car actually supports by trying each one and then restoring the original mode.</string>
     <string name="probe_button">Probe car</string>
     <string name="probe_confirm_title">Probe modes?</string>
-    <string name="probe_confirm_message">The app will briefly switch through every known drive mode to find out which ones the car supports. It takes a few seconds. Do not run while driving.</string>
+    <string name="probe_confirm_message">The app will ask the car which of the known drive modes it reports as supported and move them to the active list. The rest stays available for manual add.</string>
     <string name="probe_confirm_run">Probe</string>
-    <string name="probe_progress">Probing %1$d / %2$d…</string>
     <string name="probe_result">Supported modes found: %1$d of %2$d</string>
     <string name="probe_failed">Probe failed: SDK is not available</string>
 

@@ -194,6 +194,58 @@ public final class DriveModeSettings {
     }
 
     /**
+     * Result of the auto-probe: force enabled = (code is in {@code probed}),
+     * disabled = everything else from the catalog. Inside each section the
+     * relative order from the previous save is preserved so the user's
+     * preferred ordering of currently-active modes survives a re-probe.
+     */
+    @NonNull
+    public List<ModeOrderEntry> applyProbedSupported(@NonNull int[] probed) {
+        java.util.Set<Integer> probedSet = new LinkedHashSet<>();
+        for (int p : probed) probedSet.add(p);
+
+        java.util.Set<Integer> catalogSet = new LinkedHashSet<>();
+        for (DriveModeDescriptor d : DriveModeCatalog.all()) catalogSet.add(d.code);
+
+        List<ModeOrderEntry> existing = getOrder();
+        List<ModeOrderEntry> enabled = new ArrayList<>();
+        List<ModeOrderEntry> disabled = new ArrayList<>();
+        java.util.Set<Integer> seen = new LinkedHashSet<>();
+
+        // 1. Walk previously saved order: split into enabled (probed-supported)
+        //    and disabled (the rest), respecting the saved relative ordering.
+        for (ModeOrderEntry e : existing) {
+            if (!catalogSet.contains(e.code) || seen.contains(e.code)) continue;
+            seen.add(e.code);
+            if (probedSet.contains(e.code)) {
+                enabled.add(new ModeOrderEntry(e.code, true));
+            } else {
+                disabled.add(new ModeOrderEntry(e.code, false));
+            }
+        }
+        // 2. Probed codes that weren't in the saved order yet — append at the
+        //    end of enabled in the probe-input order.
+        for (int code : probed) {
+            if (!seen.contains(code) && catalogSet.contains(code)) {
+                enabled.add(new ModeOrderEntry(code, true));
+                seen.add(code);
+            }
+        }
+        // 3. Anything else from the catalog goes to the disabled tail.
+        for (DriveModeDescriptor d : DriveModeCatalog.all()) {
+            if (!seen.contains(d.code)) {
+                disabled.add(new ModeOrderEntry(d.code, false));
+                seen.add(d.code);
+            }
+        }
+
+        List<ModeOrderEntry> result = new ArrayList<>(enabled);
+        result.addAll(disabled);
+        saveOrder(result);
+        return result;
+    }
+
+    /**
      * Default at first run (before the supported list arrives from the SDK).
      * Nothing is enabled by default — that is filled in by {@link #mergeWithSupported}.
      */

@@ -487,47 +487,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startProbe() {
-        java.util.List<dezz.monjaro.drive_modes.car.DriveModeDescriptor> all =
-                DriveModeCatalog.all();
-        int[] codes = new int[all.size()];
-        for (int i = 0; i < codes.length; i++) codes[i] = all.get(i).code;
-
-        TextView progressText = new TextView(this);
-        progressText.setText(getString(R.string.probe_progress, 0, codes.length));
-        progressText.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
-        float d = getResources().getDisplayMetrics().density;
-        progressText.setPadding((int) (24 * d), (int) (24 * d), (int) (24 * d), (int) (24 * d));
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(R.string.probe_title)
-                .setView(progressText)
-                .setCancelable(false)
-                .create();
-        dialog.show();
-
-        DriveModeRepository.get().probeSupportedModes(codes, 250,
+        final int catalogSize = DriveModeCatalog.all().size();
+        DriveModeRepository.get().probeSupportedModes(
                 new DriveModeRepository.ProbeCallback() {
                     @Override
-                    public void onProgress(int index, int total, int code) {
-                        progressText.setText(getString(R.string.probe_progress, index, total));
-                    }
-
-                    @Override
                     public void onComplete(@NonNull int[] supported) {
-                        if (dialog.isShowing()) dialog.dismiss();
+                        // Force settings to match the probed result: only probed
+                        // codes stay enabled, the rest move to "available". The
+                        // user can pick anything extra manually (e.g. SAND on
+                        // Monjaro is usable but the SDK reports it as not
+                        // available — it stays in "available" chips for one tap).
+                        if (supported.length > 0) {
+                            List<ModeOrderEntry> merged =
+                                    settings.applyProbedSupported(supported);
+                            rebindLists(merged);
+                        }
                         Snackbar.make(binding.getRoot(),
                                         getString(R.string.probe_result,
-                                                supported.length, codes.length),
+                                                supported.length, catalogSize),
                                         Snackbar.LENGTH_LONG)
                                 .show();
-                        // The repository already published supported, listener
-                        // will refresh UI, but call directly to be safe.
-                        if (supported.length > 0) onSupportedModesChanged(supported);
                     }
 
                     @Override
                     public void onFailed() {
-                        if (dialog.isShowing()) dialog.dismiss();
                         Snackbar.make(binding.getRoot(),
                                         R.string.probe_failed,
                                         Snackbar.LENGTH_LONG)

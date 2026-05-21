@@ -401,13 +401,11 @@ public final class DriveModeRepository {
      * Callback for the probe operation. All methods are invoked on the UI thread.
      */
     public interface ProbeCallback {
-        /** Called once per attempted mode. {@code index} is 1-based. */
-        @MainThread
-        void onProgress(int index, int total, int code);
-
         /**
-         * Called when probing finishes successfully. {@code supported} lists
-         * the codes that actually took effect.
+         * Called when probing finishes. {@code supported} lists the codes the
+         * SDK did not explicitly mark as not-available. Anything else the user
+         * can still add manually from the "available" chips section (e.g. SAND
+         * on Monjaro — the OEM disables it but it works if forced).
          */
         @MainThread
         void onComplete(@NonNull int[] supported);
@@ -418,110 +416,43 @@ public final class DriveModeRepository {
     }
 
     /**
-     * Probe every catalog mode to see which ones the car actually accepts.
-     * Each call is marked PROGRAMMATIC so the overlay does not flash through
-     * intermediate modes. The original mode is restored at the end.
+     * Read-only probe: asks the SDK for the supported values of the drive-mode
+     * function via {@code getSupportedFunctionValue(FUNC)}. This is the same
+     * call as {@link #loadSupported()} but exposed as an explicit user action
+     * so the user can refresh the list and have it propagated to the settings.
      *
-     * Caller responsibilities:
-     *  - Confirm with the user before invoking (this physically changes ECU
-     *    drive mode several times in a row).
-     *  - Do not invoke while driving.
+     * The SDK's list is generally a strict subset of physically usable modes
+     * (e.g. SAND is reported as unsupported on Monjaro even though it works).
+     * Anything missing the user can add manually from the "available" chips.
      */
     @AnyThread
-    public void probeSupportedModes(@NonNull int[] codesToProbe,
-                                    long perStepDelayMs,
-                                    @NonNull ProbeCallback callback) {
-        ioHandler.post(() -> probeOnIo(codesToProbe, perStepDelayMs, callback));
+    public void probeSupportedModes(@NonNull ProbeCallback callback) {
+        ioHandler.post(() -> probeOnIo(callback));
     }
 
     @WorkerThread
-    private void probeOnIo(int[] codesToProbe, long perStepDelayMs, ProbeCallback callback) {
+    private void probeOnIo(ProbeCallback callback) {
         ICarFunction cf = carFunction;
         if (cf == null) {
             uiHandler.post(callback::onFailed);
             return;
         }
-        int original;
+        int[] supported;
         try {
-            original = cf.getFunctionValue(FUNC);
+            supported = cf.getSupportedFunctionValue(FUNC);
         } catch (Throwable t) {
-            Logs.w("probe: getFunctionValue (original) failed: " + t.getMessage());
-            original = lastKnownMode;
+            Logs.w("probe: getSupportedFunctionValue failed: " + t.getMessage());
+            uiHandler.post(callback::onFailed);
+            return;
         }
-        Logs.d("Probe started, original mode = " + original);
-
-        java.util.ArrayList<Integer> supported = new java.util.ArrayList<>();
-        for (int i = 0; i < codesToProbe.length; i++) {
-            int code = codesToProbe[i];
-            int idx = i + 1;
-            uiHandler.post(() -> callback.onProgress(idx, codesToProbe.length, code));
-            if (probeOne(cf, code, perStepDelayMs)) {
-                supported.add(code);
-            }
-        }
-
-        // Restore original mode.
-        if (original >= 0) {
-            try {
-                synchronized (inFlightLock) {
-                    programmaticInFlight.put(original,
-                            SystemClock.elapsedRealtime() + PROGRAMMATIC_TTL_MS);
-                }
-                cf.setFunctionValue(FUNC, original);
-                Logs.d("Probe finished, restored mode " + original);
-            } catch (Throwable t) {
-                Logs.w("probe: restore failed: " + t.getMessage());
-            }
-        }
-
-        int[] result = new int[supported.size()];
-        for (int i = 0; i < result.length; i++) result[i] = supported.get(i);
-
-        // Publish the new supported list so the rest of the app picks it up.
-        if (result.length > 0) {
-            supportedModes = result.clone();
+        if (supported == null) supported = new int[0];
+        Logs.d("Probe: SDK reports " + supported.length + " supported modes");
+        if (supported.length > 0) {
+            supportedModes = supported.clone();
             notifySupportedChanged();
         }
+        final int[] result = supported;
         uiHandler.post(() -> callback.onComplete(result));
-    }
-
-    /**
-     * Try to set a single mode and verify the SDK actually accepted it.
-     * Returns true if the value reads back as expected within the timeout.
-     */
-    @WorkerThread
-    private boolean probeOne(ICarFunction cf, int code, long delayMs) {
-        synchronized (inFlightLock) {
-            programmaticInFlight.put(code, SystemClock.elapsedRealtime() + PROGRAMMATIC_TTL_MS);
-        }
-        boolean ok;
-        try {
-            ok = cf.setFunctionValue(FUNC, code);
-        } catch (Throwable t) {
-            Logs.w("probe " + code + ": setFunctionValue threw " + t.getMessage());
-            synchronized (inFlightLock) {
-                programmaticInFlight.remove(code);
-            }
-            return false;
-        }
-        if (!ok) {
-            synchronized (inFlightLock) {
-                programmaticInFlight.remove(code);
-            }
-            return false;
-        }
-        try {
-            Thread.sleep(Math.max(50, delayMs));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        try {
-            int actual = cf.getFunctionValue(FUNC);
-            return actual == code;
-        } catch (Throwable t) {
-            Logs.w("probe " + code + ": readback failed: " + t.getMessage());
-            return false;
-        }
     }
 
     @AnyThread
