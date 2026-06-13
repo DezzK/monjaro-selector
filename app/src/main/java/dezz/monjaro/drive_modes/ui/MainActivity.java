@@ -48,7 +48,6 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.List;
 import java.util.Locale;
 
-import dezz.monjaro.drive_modes.BuildConfig;
 import dezz.monjaro.drive_modes.MonjaroSelectorApp;
 import dezz.monjaro.drive_modes.R;
 import dezz.monjaro.drive_modes.car.DriveModeCatalog;
@@ -149,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_about) {
-            showAboutDialog();
+            startActivity(new Intent(this, AboutActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -430,31 +429,6 @@ public class MainActivity extends AppCompatActivity {
         float d = getResources().getDisplayMetrics().density;
         tv.setPadding((int) (12 * d), (int) (16 * d), (int) (12 * d), (int) (4 * d));
         container.addView(tv);
-    }
-
-    private void showAboutDialog() {
-        View root = LayoutInflater.from(this).inflate(R.layout.dialog_about, null);
-        ((TextView) root.findViewById(R.id.about_app_name)).setText(R.string.app_name);
-        ((TextView) root.findViewById(R.id.about_version))
-                .setText(getString(R.string.about_version, BuildConfig.VERSION_NAME));
-        TextView telegram = root.findViewById(R.id.about_telegram);
-        telegram.setOnClickListener(v -> {
-            String text = telegram.getText().toString();
-            String handle = (text.startsWith("@") && text.length() > 1)
-                    ? text.substring(1)
-                    : text;
-            if (handle.isEmpty()) return;
-            Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/" + handle));
-            try {
-                startActivity(open);
-            } catch (Throwable ignored) {
-                copyToClipboard(getString(R.string.about_telegram), text);
-            }
-        });
-        new AlertDialog.Builder(this)
-                .setView(root)
-                .setPositiveButton(R.string.about_close, null)
-                .show();
     }
 
     private void copyToClipboard(@NonNull String label, @NonNull String value) {

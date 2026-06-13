@@ -59,13 +59,16 @@
     <string name="duration_caption">Touching the overlay (tap or scroll) resets the timer.</string>
 
     <string name="about_title">About</string>
-    <string name="about_version">Version %1$s</string>
-    <string name="about_description">An alternative drive-mode selector for the Geely Monjaro head unit. Receives intents from MConfig+ and provides a configurable mode list with quick switching via the physical knob or by tapping the overlay.</string>
-    <string name="about_author_label">Author</string>
-    <string name="about_author">Dezz</string>
-    <string name="about_telegram">@DezzK</string>
-    <string name="about_copyright">© 2026 Dezz. All rights reserved.</string>
     <string name="about_close">Close</string>
+    <string name="about_fallback"><![CDATA[
+        <p><b>Monjaro Drive Mode Selector</b><br>
+        An alternative drive-mode selector for the Geely Monjaro head unit.</p>
+        <p><b>Author</b><br>
+        Dezz — Telegram <a href="https://t.me/DezzK">@DezzK</a></p>
+        <p><b>Source code</b><br>
+        <a href="https://github.com/DezzK/monjaro-selector">github.com/DezzK/monjaro-selector</a></p>
+        <p><i>The full About page is available online at <a href="https://dezzk.github.io/monjaro-selector/">dezzk.github.io/monjaro-selector</a> when an internet connection is available.</i></p>
+    ]]></string>
 
     <string name="notification_channel_name">Drive mode selector</string>
     <string name="notification_channel_description">Background watcher for drive mode changes</string>

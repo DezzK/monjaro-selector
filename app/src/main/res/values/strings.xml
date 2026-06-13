@@ -59,13 +59,17 @@
     <string name="duration_caption">Касание оверлея (тап или скролл) сбрасывает таймер.</string>
 
     <string name="about_title">О программе</string>
-    <string name="about_version">Версия %1$s</string>
-    <string name="about_description">Альтернативный селектор режимов вождения для головного устройства Geely Monjaro. Перехватывает интенты от MConfig+ и предоставляет настраиваемый список режимов с быстрым переключением через physical knob или тап по оверлею.</string>
-    <string name="about_author_label">Автор</string>
-    <string name="about_author">Dezz</string>
-    <string name="about_telegram">@DezzK</string>
-    <string name="about_copyright">© 2026 Dezz. Все права защищены.</string>
     <string name="about_close">Закрыть</string>
+    <string name="about_url" translatable="false">https://dezzk.github.io/monjaro-selector/</string>
+    <string name="about_fallback"><![CDATA[
+        <p><b>Monjaro Drive Mode Selector</b><br>
+        Альтернативный селектор режимов вождения для головного устройства Geely Monjaro.</p>
+        <p><b>Автор</b><br>
+        Dezz — Telegram <a href="https://t.me/DezzK">@DezzK</a></p>
+        <p><b>Исходный код</b><br>
+        <a href="https://github.com/DezzK/monjaro-selector">github.com/DezzK/monjaro-selector</a></p>
+        <p><i>Полная страница «О программе» доступна онлайн по адресу <a href="https://dezzk.github.io/monjaro-selector/">dezzk.github.io/monjaro-selector</a> при наличии подключения к интернету.</i></p>
+    ]]></string>
 
     <string name="notification_channel_name">Селектор режимов</string>
     <string name="notification_channel_description">Фоновое отслеживание изменения режима вождения</string>

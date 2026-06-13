@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- About screen loads the online About page (with offline fallback). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 
     <application
@@ -29,6 +32,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.AboutActivity"
+            android:exported="false" />
+
         <service
             android:name=".service.DriveModeOverlayService"
             android:enabled="true"
@@ -39,7 +46,7 @@
                 android:value="ecarx_drive_mode_overlay" />
         </service>
 
-        <!-- Receives knob events from MConfig+ (see docs/mconfig-plus-research.md).
+        <!-- Receives knob events from MConfig+ (see research/mconfig-plus-research.md).
              In MConfig+ configure knobLeft/Right Click{1,2,3} -> "Send intent"
              with action set to one of dezz.monjaro.drive_modes.PREV_*/NEXT_*
              and package dezz.monjaro.drive_modes. -->
