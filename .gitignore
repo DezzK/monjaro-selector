@@ -7,6 +7,9 @@ local.properties
 # Signing key — never committed
 *.jks
 
+# Proprietary ECarX SDK jars — kept locally, not committed
+app/libs/
+
 # IDE
 .idea/
 *.iml
