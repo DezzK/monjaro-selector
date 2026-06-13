@@ -46,10 +46,10 @@
                 android:value="ecarx_drive_mode_overlay" />
         </service>
 
-        <!-- Receives knob events from MConfig+ (see research/mconfig-plus-research.md).
-             In MConfig+ configure knobLeft/Right Click{1,2,3} -> "Send intent"
-             with action set to one of dezz.monjaro.drive_modes.PREV_*/NEXT_*
-             and package dezz.monjaro.drive_modes. -->
+        <!-- Receives knob events from MConfig+. In MConfig+ configure
+             knobLeft/Right Click{1,2,3} -> "Send intent" with action set to one
+             of dezz.monjaro.drive_modes.PREV_*/NEXT_* and package
+             dezz.monjaro.drive_modes. -->
         <receiver
             android:name=".knob.KnobReceiver"
             android:enabled="true"
