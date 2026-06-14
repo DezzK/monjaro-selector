@@ -51,6 +51,15 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Decrypt ECarX SDK jars
+        env:
+          LIBS_ENC_PASSWORD: ${{ secrets.LIBS_ENC_PASSWORD }}
+        run: |
+          for f in ecarx.jar ecarx.adaptapi.jar; do
+            openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -md sha256 \
+              -in "app/libs/$f.enc" -out "app/libs/$f" -pass env:LIBS_ENC_PASSWORD
+          done
+
       - name: Build release APK
         env:
           VERSION_NAME: ${{ steps.version.outputs.version }}

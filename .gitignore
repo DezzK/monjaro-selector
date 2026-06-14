@@ -7,8 +7,9 @@ local.properties
 # Signing key — never committed
 *.jks
 
-# Proprietary ECarX SDK jars — kept locally, not committed
-app/libs/
+# Proprietary ECarX SDK jars — plaintext stays local; committed only as
+# encrypted *.enc blobs (decrypted in CI via the LIBS_ENC_PASSWORD secret).
+app/libs/*.jar
 
 # IDE
 .idea/
